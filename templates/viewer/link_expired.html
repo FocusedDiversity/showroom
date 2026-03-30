@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Link Unavailable - Showroom{% endblock %}
+
+{% block body %}
+<div class="viewer-page">
+    <div class="gate-card">
+        <div class="gate-logo">
+            <span class="logo-icon large">&#9670;</span>
+        </div>
+        <h1 class="gate-title">Link Unavailable</h1>
+        <p class="gate-subtitle">This link has expired or been disabled. Please contact the sender for a new link.</p>
+        <div class="gate-footer">
+            <span class="powered-label">Powered by</span>
+            <img src="{{ url_for('static', filename='img/synaptiq-logo-color.svg') }}" alt="Synaptiq" class="powered-logo">
+        </div>
+    </div>
+</div>
+{% endblock %}

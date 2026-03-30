@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} - Showroom{% endblock %}
+
+{% block body %}
+<div class="viewer-frame-page">
+    <div class="viewer-topbar">
+        <span class="viewer-topbar-title">{{ title }}</span>
+        <span class="viewer-topbar-brand">
+            <img src="{{ url_for('static', filename='img/synaptiq-logo-color.svg') }}" alt="Synaptiq" class="topbar-logo">
+        </span>
+    </div>
+    <iframe id="deck-frame" src="{{ url_for('viewer_raw', token=token) }}"
+            class="deck-iframe" frameborder="0"></iframe>
+</div>
+
+<script src="{{ url_for('static', filename='js/heartbeat.js') }}"></script>
+<script>
+    startHeartbeat({{ view_id }});
+</script>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}{{ deck.title }} - Showroom{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('admin_dashboard') }}">&larr; All Decks</a>
+</div>
+
+<div class="page-header">
+    <div>
+        <h1>{{ deck.title }}
+            {% if not deck.is_active %}
+            <span class="badge badge-inactive">Disabled</span>
+            {% endif %}
+        </h1>
+        {% if deck.description %}
+        <p class="subtitle">{{ deck.description }}</p>
+        {% endif %}
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('admin_analytics', deck_id=deck.id) }}" class="btn btn-secondary">View Analytics</a>
+        <form action="{{ url_for('admin_deck_toggle', deck_id=deck.id) }}" method="post" style="display:inline">
+            <button type="submit" class="btn btn-secondary">
+                {{ 'Enable' if not deck.is_active else 'Disable' }}
+            </button>
+        </form>
+        <form action="{{ url_for('admin_deck_delete', deck_id=deck.id) }}" method="post" style="display:inline"
+              onsubmit="return confirm('Delete this deck and all its data?')">
+            <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+    </div>
+</div>
+
+<!-- Create Share Link -->
+<section class="section">
+    <h2>Share Links</h2>
+    <form action="{{ url_for('admin_create_share', deck_id=deck.id) }}" method="post" class="inline-form">
+        <input type="email" name="email" required placeholder="prospect@company.com" class="input-inline">
+        <button type="submit" class="btn btn-primary">Create Link</button>
+    </form>
+
+    {% if share_links %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Recipient</th>
+                <th>Link</th>
+                <th>Views</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for link in share_links %}
+            <tr class="{{ 'row-inactive' if not link.is_active }}">
+                <td>{{ link.recipient_email }}</td>
+                <td>
+                    <div class="link-cell">
+                        <code class="share-url" id="url-{{ link.id }}">{{ request.host_url.rstrip('/') }}{{ url_for('viewer_gate', token=link.token) }}</code>
+                        <button class="btn-icon" onclick="copyLink('url-{{ link.id }}')" title="Copy link">&#128203;</button>
+                    </div>
+                </td>
+                <td>{{ link.view_count }}</td>
+                <td>
+                    <span class="badge {{ 'badge-active' if link.is_active else 'badge-inactive' }}">
+                        {{ 'Active' if link.is_active else 'Disabled' }}
+                    </span>
+                </td>
+                <td>{{ link.created_at[:10] }}</td>
+                <td>
+                    <form action="{{ url_for('admin_share_toggle', link_id=link.id) }}" method="post" style="display:inline">
+                        <button type="submit" class="btn btn-small">
+                            {{ 'Enable' if not link.is_active else 'Disable' }}
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="muted">No share links yet. Create one above to share this deck.</p>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyLink(id) {
+    const el = document.getElementById(id);
+    navigator.clipboard.writeText(el.textContent.trim()).then(() => {
+        const btn = el.nextElementSibling;
+        btn.textContent = '✓';
+        setTimeout(() => btn.innerHTML = '&#128203;', 1500);
+    });
+}
+</script>
+{% endblock %}
