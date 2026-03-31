@@ -11,11 +11,17 @@ function startHeartbeat(viewId) {
     var slideHistory = [];
 
     // Listen for slide change messages from the iframe
+    var slideIndicator = document.getElementById('slide-indicator');
     window.addEventListener('message', function (e) {
         if (e.data && e.data.type === 'showroom_slide') {
             currentSlide = e.data.slide;
             totalSlides = e.data.total || totalSlides;
             slideHistory.push({ slide: currentSlide, time: getElapsed() });
+            // Update topbar indicator
+            if (slideIndicator) {
+                slideIndicator.textContent = 'Slide ' + currentSlide + (totalSlides ? ' of ' + totalSlides : '');
+                slideIndicator.classList.add('visible');
+            }
         }
     });
 

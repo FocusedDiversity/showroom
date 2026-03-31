@@ -474,6 +474,17 @@ a:hover { text-decoration: underline; }
     border-bottom: 1px solid var(--border);
 }
 .viewer-topbar-title { font-weight: 500; }
+.viewer-topbar-slide {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--surface);
+    padding: 4px 12px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    display: none;
+}
+.viewer-topbar-slide.visible { display: inline-block; }
 .viewer-topbar-brand { font-size: 12px; }
 .deck-iframe {
     flex: 1;
