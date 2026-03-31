@@ -59,6 +59,9 @@ def inject_base_tag(html_content, base_url):
 
 @app.route('/')
 def index():
+    # Redirect showcase.synaptiq.ai to the designated share link
+    if request.host.startswith('showcase.synaptiq.ai'):
+        return redirect('/v/kc-w27Yh-Wd1Xeq3i1XsNw')
     return redirect(url_for('admin_dashboard'))
 
 
