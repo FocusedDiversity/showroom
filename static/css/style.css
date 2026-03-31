@@ -439,6 +439,7 @@ a:hover { text-decoration: underline; }
     text-align: center;
 }
 .gate-logo { margin-bottom: 24px; }
+.gate-logo-img { height: 48px; width: auto; }
 .gate-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
 .gate-subtitle { color: var(--text-secondary); margin-bottom: 32px; font-size: 15px; }
 .gate-form { text-align: left; }
@@ -450,8 +451,8 @@ a:hover { text-decoration: underline; }
     justify-content: center;
     gap: 8px;
 }
-.powered-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; }
-.powered-logo { height: 100px; width: auto; }
+.powered-label { font-size: 7px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; }
+.powered-logo { height: 60px; width: auto; }
 .topbar-logo { height: 26px; width: auto; vertical-align: middle; }
 
 /* ── Deck Viewer Frame ───────────────────────────────────── */
