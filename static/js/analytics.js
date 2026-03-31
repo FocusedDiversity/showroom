@@ -41,16 +41,21 @@ function loadAnalytics(deckId) {
             // Views table
             var tbody = document.getElementById('views-tbody');
             if (data.views.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="muted">No views yet</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="muted">No views yet</td></tr>';
                 return;
             }
             var rows = '';
             data.views.forEach(function (v) {
+                var slideInfo = '—';
+                if (v.current_slide) {
+                    slideInfo = v.current_slide + (v.total_slides ? ' / ' + v.total_slides : '');
+                }
                 rows += '<tr>' +
                     '<td>' + v.viewer_email + '</td>' +
                     '<td>' + v.shared_with + '</td>' +
                     '<td>' + (v.is_forwarded ? '<span class="badge badge-inactive">Forwarded</span>' : '—') + '</td>' +
                     '<td>' + formatDuration(v.duration_seconds) + '</td>' +
+                    '<td>' + slideInfo + '</td>' +
                     '<td>' + v.viewed_at + '</td>' +
                     '<td>' + parseUA(v.user_agent) + '</td>' +
                     '</tr>';

@@ -41,6 +41,49 @@ def inject_base_tag(html_content, base_url):
     return tag + html_content
 
 
+def inject_slide_tracking(html_content):
+    """Inject a script that posts slide changes to the parent window."""
+    tracking_script = '''
+<script>
+(function() {
+  // Detect slide navigation and notify parent
+  var lastSlide = null;
+  function detectSlide() {
+    var slide = null;
+    // Method 1: Look for active slide with data-slide attribute
+    var active = document.querySelector('.slide.active[data-slide]');
+    if (active) { slide = parseInt(active.dataset.slide); }
+    // Method 2: Check for a current/currentSlide variable
+    if (!slide && typeof current !== 'undefined') { slide = current; }
+    // Method 3: Look for slide-indicator text like "3 / 12"
+    if (!slide) {
+      var indicator = document.querySelector('.slide-indicator');
+      if (indicator) {
+        var match = indicator.textContent.match(/(\\d+)\\s*\\/\\s*(\\d+)/);
+        if (match) { slide = parseInt(match[1]); }
+      }
+    }
+    if (slide && slide !== lastSlide) {
+      lastSlide = slide;
+      var total = document.querySelectorAll('.slide[data-slide]').length || null;
+      window.parent.postMessage({type: 'showroom_slide', slide: slide, total: total}, '*');
+    }
+  }
+  // Poll for changes + listen for common navigation events
+  setInterval(detectSlide, 500);
+  document.addEventListener('keydown', function() { setTimeout(detectSlide, 100); });
+  document.addEventListener('click', function() { setTimeout(detectSlide, 100); });
+  // Initial detection
+  setTimeout(detectSlide, 200);
+})();
+</script>'''
+    # Inject before </body>
+    body_close = re.compile(r'(</body>)', re.IGNORECASE)
+    if body_close.search(html_content):
+        return body_close.sub(tracking_script + r'\1', html_content, count=1)
+    return html_content + tracking_script
+
+
 # ── Admin Routes ─────────────────────────────────────────────────────
 
 @app.route('/')
@@ -263,6 +306,8 @@ def admin_analytics_api(deck_id):
             'user_agent': v['user_agent'],
             'ip_address': v['ip_address'],
             'is_forwarded': bool(v['is_forwarded']),
+            'current_slide': v['current_slide'],
+            'total_slides': v['total_slides'],
         } for v in views],
         'daily': [{'day': d['day'], 'count': d['count']} for d in daily],
     })
@@ -369,6 +414,7 @@ def viewer_raw(token):
 
     base_url = url_for('viewer_asset', token=token, path='', _external=False)
     html = inject_base_tag(html, base_url)
+    html = inject_slide_tracking(html)
 
     return html, 200, {'Content-Type': 'text/html; charset=utf-8'}
 
@@ -399,14 +445,16 @@ def heartbeat():
 
     view_id = data.get('view_id')
     duration = data.get('duration')
+    current_slide = data.get('current_slide')
+    total_slides = data.get('total_slides')
 
     if not view_id or duration is None:
         return jsonify({'ok': False}), 400
 
     db = get_db()
     db.execute(
-        'UPDATE views SET duration_seconds = %s WHERE id = %s',
-        (int(duration), int(view_id))
+        'UPDATE views SET duration_seconds = %s, current_slide = %s, total_slides = %s WHERE id = %s',
+        (int(duration), current_slide, total_slides, int(view_id))
     )
     db.commit()
 

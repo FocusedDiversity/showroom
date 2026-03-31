@@ -35,6 +35,8 @@ CREATE TABLE IF NOT EXISTS views (
     ip_address TEXT DEFAULT '',
     referrer TEXT DEFAULT '',
     is_forwarded BOOLEAN DEFAULT FALSE,
+    current_slide INTEGER DEFAULT NULL,
+    total_slides INTEGER DEFAULT NULL,
     FOREIGN KEY (share_link_id) REFERENCES share_links(id) ON DELETE CASCADE
 );
 
