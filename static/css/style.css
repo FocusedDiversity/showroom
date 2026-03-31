@@ -439,7 +439,7 @@ a:hover { text-decoration: underline; }
     text-align: center;
 }
 .gate-logo { margin-bottom: 24px; }
-.gate-logo-img { height: 48px; width: auto; }
+.gate-logo-img { height: 34px; width: auto; }
 .gate-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
 .gate-subtitle { color: var(--text-secondary); margin-bottom: 32px; font-size: 15px; }
 .gate-form { text-align: left; }
