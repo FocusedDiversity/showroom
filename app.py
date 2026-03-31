@@ -77,10 +77,12 @@ def inject_slide_tracking(html_content):
   setTimeout(detectSlide, 200);
 })();
 </script>'''
-    # Inject before </body>
-    body_close = re.compile(r'(</body>)', re.IGNORECASE)
-    if body_close.search(html_content):
-        return body_close.sub(tracking_script + r'\1', html_content, count=1)
+    # Inject before </body> using string replacement (not re.sub, which
+    # would interpret backslashes in the JS as regex escapes)
+    body_close = re.compile(r'</body>', re.IGNORECASE)
+    m = body_close.search(html_content)
+    if m:
+        return html_content[:m.start()] + tracking_script + html_content[m.start():]
     return html_content + tracking_script
 
 
