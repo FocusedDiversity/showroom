@@ -443,8 +443,9 @@ def heartbeat():
     return jsonify({'ok': True})
 
 
-# ── Main ─────────────────────────────────────────────────────────────
+# ── Init DB on import (for gunicorn) ─────────────────────────────────
+
+init_db(app)
 
 if __name__ == '__main__':
-    init_db(app)
     app.run(debug=True, port=5111)
