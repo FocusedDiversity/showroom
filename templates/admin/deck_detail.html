@@ -67,7 +67,7 @@
                         {{ 'Active' if link.is_active else 'Disabled' }}
                     </span>
                 </td>
-                <td>{{ link.created_at[:10] }}</td>
+                <td>{{ link.created_at.strftime('%Y-%m-%d') }}</td>
                 <td>
                     <form action="{{ url_for('admin_share_toggle', link_id=link.id) }}" method="post" style="display:inline">
                         <button type="submit" class="btn btn-small">

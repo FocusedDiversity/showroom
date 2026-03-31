@@ -1,17 +1,14 @@
-import os
 import secrets
-import shutil
-import zipfile
-import mimetypes
 import re
 from datetime import datetime
 from flask import (
     Flask, render_template, request, redirect, url_for,
-    flash, session, jsonify, send_from_directory, abort
+    flash, session, jsonify, abort
 )
 from slugify import slugify
 from db import get_db, close_db, init_db
-from config import SECRET_KEY, UPLOAD_FOLDER, MAX_CONTENT_LENGTH
+from config import SECRET_KEY, MAX_CONTENT_LENGTH
+from storage import get_storage
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -19,7 +16,7 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 
 app.teardown_appcontext(close_db)
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+storage = get_storage()
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -29,29 +26,18 @@ def unique_slug(title):
     slug = base
     db = get_db()
     counter = 1
-    while db.execute('SELECT 1 FROM decks WHERE slug = ?', (slug,)).fetchone():
+    while db.execute('SELECT 1 FROM decks WHERE slug = %s', (slug,)).fetchone():
         slug = f'{base}-{counter}'
         counter += 1
     return slug
 
 
-def safe_zip_extract(zf, dest):
-    """Extract zip, rejecting path traversal attempts."""
-    for member in zf.namelist():
-        # Reject absolute paths and traversal
-        if member.startswith('/') or '..' in member:
-            raise ValueError(f'Unsafe path in zip: {member}')
-    zf.extractall(dest)
-
-
 def inject_base_tag(html_content, base_url):
     """Inject a <base> tag after <head> so relative URLs resolve to our asset route."""
     tag = f'<base href="{base_url}">'
-    # Try to insert after <head> tag
     pattern = re.compile(r'(<head[^>]*>)', re.IGNORECASE)
     if pattern.search(html_content):
         return pattern.sub(r'\1' + tag, html_content, count=1)
-    # Fallback: prepend
     return tag + html_content
 
 
@@ -59,7 +45,6 @@ def inject_base_tag(html_content, base_url):
 
 @app.route('/')
 def index():
-    # Redirect showcase.synaptiq.ai to the designated share link
     if request.host.startswith('showcase.synaptiq.ai'):
         return redirect('/v/kc-w27Yh-Wd1Xeq3i1XsNw')
     return redirect(url_for('admin_dashboard'))
@@ -96,53 +81,42 @@ def admin_upload():
         return redirect(url_for('admin_dashboard'))
 
     slug = unique_slug(title)
-    deck_dir = os.path.join(UPLOAD_FOLDER, slug)
-    os.makedirs(deck_dir, exist_ok=True)
-
     filename = file.filename.lower()
+
     try:
         if filename.endswith('.zip'):
-            # Save and extract zip
-            zip_path = os.path.join(deck_dir, 'upload.zip')
-            file.save(zip_path)
-            with zipfile.ZipFile(zip_path, 'r') as zf:
-                safe_zip_extract(zf, deck_dir)
-            os.remove(zip_path)
+            storage.extract_zip(slug, file.read())
 
-            # Verify index.html exists
-            if not os.path.exists(os.path.join(deck_dir, 'index.html')):
-                shutil.rmtree(deck_dir)
+            if not storage.file_exists(slug, 'index.html'):
+                storage.delete_deck(slug)
                 flash('ZIP must contain an index.html file.', 'error')
                 return redirect(url_for('admin_dashboard'))
 
         elif filename.endswith('.html') or filename.endswith('.htm'):
-            file.save(os.path.join(deck_dir, 'index.html'))
+            storage.save_file(slug, 'index.html', file.read())
         else:
-            shutil.rmtree(deck_dir)
             flash('Please upload an HTML file or a ZIP archive.', 'error')
             return redirect(url_for('admin_dashboard'))
 
-    except (zipfile.BadZipFile, ValueError) as e:
-        shutil.rmtree(deck_dir, ignore_errors=True)
+    except (ValueError, Exception) as e:
+        storage.delete_deck(slug)
         flash(f'Upload failed: {e}', 'error')
         return redirect(url_for('admin_dashboard'))
 
     # Record assets
     db = get_db()
-    db.execute(
-        'INSERT INTO decks (title, slug, description) VALUES (?, ?, ?)',
+    row = db.execute(
+        'INSERT INTO decks (title, slug, description) VALUES (%s, %s, %s) RETURNING id',
         (title, slug, description)
-    )
-    deck_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
+    ).fetchone()
+    deck_id = row['id']
 
-    for root, dirs, files in os.walk(deck_dir):
-        for fname in files:
-            full = os.path.join(root, fname)
-            rel = os.path.relpath(full, deck_dir)
-            db.execute(
-                'INSERT INTO deck_assets (deck_id, filename, filepath) VALUES (?, ?, ?)',
-                (deck_id, fname, rel)
-            )
+    for rel_path in storage.list_files(slug):
+        fname = rel_path.split('/')[-1] if '/' in rel_path else rel_path
+        db.execute(
+            'INSERT INTO deck_assets (deck_id, filename, filepath) VALUES (%s, %s, %s)',
+            (deck_id, fname, rel_path)
+        )
     db.commit()
 
     flash(f'Deck "{title}" uploaded successfully.', 'success')
@@ -152,7 +126,7 @@ def admin_upload():
 @app.route('/admin/deck/<int:deck_id>')
 def admin_deck_detail(deck_id):
     db = get_db()
-    deck = db.execute('SELECT * FROM decks WHERE id = ?', (deck_id,)).fetchone()
+    deck = db.execute('SELECT * FROM decks WHERE id = %s', (deck_id,)).fetchone()
     if not deck:
         abort(404)
 
@@ -160,7 +134,7 @@ def admin_deck_detail(deck_id):
         SELECT sl.*, COUNT(v.id) as view_count
         FROM share_links sl
         LEFT JOIN views v ON v.share_link_id = sl.id
-        WHERE sl.deck_id = ?
+        WHERE sl.deck_id = %s
         GROUP BY sl.id
         ORDER BY sl.created_at DESC
     ''', (deck_id,)).fetchall()
@@ -171,7 +145,7 @@ def admin_deck_detail(deck_id):
 @app.route('/admin/deck/<int:deck_id>/toggle', methods=['POST'])
 def admin_deck_toggle(deck_id):
     db = get_db()
-    db.execute('UPDATE decks SET is_active = NOT is_active WHERE id = ?', (deck_id,))
+    db.execute('UPDATE decks SET is_active = NOT is_active WHERE id = %s', (deck_id,))
     db.commit()
     flash('Deck status updated.', 'success')
     return redirect(url_for('admin_deck_detail', deck_id=deck_id))
@@ -180,11 +154,10 @@ def admin_deck_toggle(deck_id):
 @app.route('/admin/deck/<int:deck_id>/delete', methods=['POST'])
 def admin_deck_delete(deck_id):
     db = get_db()
-    deck = db.execute('SELECT slug FROM decks WHERE id = ?', (deck_id,)).fetchone()
+    deck = db.execute('SELECT slug FROM decks WHERE id = %s', (deck_id,)).fetchone()
     if deck:
-        deck_dir = os.path.join(UPLOAD_FOLDER, deck['slug'])
-        shutil.rmtree(deck_dir, ignore_errors=True)
-        db.execute('DELETE FROM decks WHERE id = ?', (deck_id,))
+        storage.delete_deck(deck['slug'])
+        db.execute('DELETE FROM decks WHERE id = %s', (deck_id,))
         db.commit()
         flash('Deck deleted.', 'success')
     return redirect(url_for('admin_dashboard'))
@@ -198,13 +171,13 @@ def admin_create_share(deck_id):
         return redirect(url_for('admin_deck_detail', deck_id=deck_id))
 
     db = get_db()
-    deck = db.execute('SELECT * FROM decks WHERE id = ?', (deck_id,)).fetchone()
+    deck = db.execute('SELECT * FROM decks WHERE id = %s', (deck_id,)).fetchone()
     if not deck:
         abort(404)
 
     token = secrets.token_urlsafe(16)
     db.execute(
-        'INSERT INTO share_links (deck_id, recipient_email, token) VALUES (?, ?, ?)',
+        'INSERT INTO share_links (deck_id, recipient_email, token) VALUES (%s, %s, %s)',
         (deck_id, email, token)
     )
     db.commit()
@@ -217,10 +190,10 @@ def admin_create_share(deck_id):
 @app.route('/admin/share/<int:link_id>/toggle', methods=['POST'])
 def admin_share_toggle(link_id):
     db = get_db()
-    link = db.execute('SELECT deck_id FROM share_links WHERE id = ?', (link_id,)).fetchone()
+    link = db.execute('SELECT deck_id FROM share_links WHERE id = %s', (link_id,)).fetchone()
     if not link:
         abort(404)
-    db.execute('UPDATE share_links SET is_active = NOT is_active WHERE id = ?', (link_id,))
+    db.execute('UPDATE share_links SET is_active = NOT is_active WHERE id = %s', (link_id,))
     db.commit()
     flash('Share link updated.', 'success')
     return redirect(url_for('admin_deck_detail', deck_id=link['deck_id']))
@@ -229,7 +202,7 @@ def admin_share_toggle(link_id):
 @app.route('/admin/deck/<int:deck_id>/analytics')
 def admin_analytics(deck_id):
     db = get_db()
-    deck = db.execute('SELECT * FROM decks WHERE id = ?', (deck_id,)).fetchone()
+    deck = db.execute('SELECT * FROM decks WHERE id = %s', (deck_id,)).fetchone()
     if not deck:
         abort(404)
     return render_template('admin/analytics.html', deck=deck)
@@ -238,7 +211,7 @@ def admin_analytics(deck_id):
 @app.route('/admin/api/analytics/<int:deck_id>')
 def admin_analytics_api(deck_id):
     db = get_db()
-    deck = db.execute('SELECT * FROM decks WHERE id = ?', (deck_id,)).fetchone()
+    deck = db.execute('SELECT * FROM decks WHERE id = %s', (deck_id,)).fetchone()
     if not deck:
         return jsonify({'error': 'Not found'}), 404
 
@@ -249,10 +222,10 @@ def admin_analytics_api(deck_id):
             COUNT(DISTINCT v.viewer_email) as unique_viewers,
             COALESCE(SUM(v.duration_seconds), 0) as total_duration,
             COALESCE(AVG(v.duration_seconds), 0) as avg_duration,
-            SUM(v.is_forwarded) as forwarded_views
+            COUNT(CASE WHEN v.is_forwarded THEN 1 END) as forwarded_views
         FROM views v
         JOIN share_links sl ON sl.id = v.share_link_id
-        WHERE sl.deck_id = ?
+        WHERE sl.deck_id = %s
     ''', (deck_id,)).fetchone()
 
     # Individual views
@@ -260,16 +233,16 @@ def admin_analytics_api(deck_id):
         SELECT v.*, sl.recipient_email as shared_with
         FROM views v
         JOIN share_links sl ON sl.id = v.share_link_id
-        WHERE sl.deck_id = ?
+        WHERE sl.deck_id = %s
         ORDER BY v.viewed_at DESC
     ''', (deck_id,)).fetchall()
 
     # Views over time (by day)
     daily = db.execute('''
-        SELECT DATE(v.viewed_at) as day, COUNT(*) as count
+        SELECT DATE(v.viewed_at)::text as day, COUNT(*) as count
         FROM views v
         JOIN share_links sl ON sl.id = v.share_link_id
-        WHERE sl.deck_id = ?
+        WHERE sl.deck_id = %s
         GROUP BY DATE(v.viewed_at)
         ORDER BY day
     ''', (deck_id,)).fetchall()
@@ -279,13 +252,13 @@ def admin_analytics_api(deck_id):
             'total_views': summary['total_views'],
             'unique_viewers': summary['unique_viewers'],
             'total_duration': summary['total_duration'],
-            'avg_duration': round(summary['avg_duration']),
+            'avg_duration': round(float(summary['avg_duration'])),
             'forwarded_views': summary['forwarded_views'] or 0,
         },
         'views': [{
             'viewer_email': v['viewer_email'],
             'shared_with': v['shared_with'],
-            'viewed_at': v['viewed_at'],
+            'viewed_at': v['viewed_at'].isoformat() if hasattr(v['viewed_at'], 'isoformat') else v['viewed_at'],
             'duration_seconds': v['duration_seconds'],
             'user_agent': v['user_agent'],
             'ip_address': v['ip_address'],
@@ -304,7 +277,7 @@ def viewer_gate(token):
         SELECT sl.*, d.title, d.is_active as deck_active
         FROM share_links sl
         JOIN decks d ON d.id = sl.deck_id
-        WHERE sl.token = ?
+        WHERE sl.token = %s
     ''', (token,)).fetchone()
 
     if not link or not link['is_active'] or not link['deck_active']:
@@ -312,7 +285,6 @@ def viewer_gate(token):
 
     session_key = f'viewer_email_{token}'
 
-    # If already authenticated, redirect to view
     if session.get(session_key):
         return redirect(url_for('viewer_deck', token=token))
 
@@ -324,11 +296,10 @@ def viewer_gate(token):
 
         session[session_key] = email
 
-        # Record the view
-        is_forwarded = 1 if email != link['recipient_email'] else 0
+        is_forwarded = email != link['recipient_email']
         db.execute('''
             INSERT INTO views (share_link_id, viewer_email, user_agent, ip_address, referrer, is_forwarded)
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s)
         ''', (
             link['id'],
             email,
@@ -351,7 +322,7 @@ def viewer_deck(token):
         SELECT sl.*, d.title, d.slug, d.is_active as deck_active
         FROM share_links sl
         JOIN decks d ON d.id = sl.deck_id
-        WHERE sl.token = ?
+        WHERE sl.token = %s
     ''', (token,)).fetchone()
 
     if not link or not link['is_active'] or not link['deck_active']:
@@ -362,10 +333,9 @@ def viewer_deck(token):
     if not viewer_email:
         return redirect(url_for('viewer_gate', token=token))
 
-    # Get the current view id for heartbeat
     view = db.execute('''
         SELECT id FROM views
-        WHERE share_link_id = ? AND viewer_email = ?
+        WHERE share_link_id = %s AND viewer_email = %s
         ORDER BY viewed_at DESC LIMIT 1
     ''', (link['id'], viewer_email)).fetchone()
 
@@ -382,7 +352,7 @@ def viewer_raw(token):
         SELECT sl.*, d.slug, d.is_active as deck_active
         FROM share_links sl
         JOIN decks d ON d.id = sl.deck_id
-        WHERE sl.token = ?
+        WHERE sl.token = %s
     ''', (token,)).fetchone()
 
     if not link or not link['is_active'] or not link['deck_active']:
@@ -392,12 +362,10 @@ def viewer_raw(token):
     if not session.get(session_key):
         abort(403)
 
-    html_path = os.path.join(UPLOAD_FOLDER, link['slug'], 'index.html')
-    if not os.path.exists(html_path):
+    if not storage.file_exists(link['slug'], 'index.html'):
         abort(404)
 
-    with open(html_path, 'r', encoding='utf-8', errors='replace') as f:
-        html = f.read()
+    html = storage.read_file(link['slug'], 'index.html')
 
     base_url = url_for('viewer_asset', token=token, path='', _external=False)
     html = inject_base_tag(html, base_url)
@@ -412,14 +380,13 @@ def viewer_asset(token, path):
         SELECT sl.*, d.slug, d.is_active as deck_active
         FROM share_links sl
         JOIN decks d ON d.id = sl.deck_id
-        WHERE sl.token = ?
+        WHERE sl.token = %s
     ''', (token,)).fetchone()
 
     if not link or not link['is_active'] or not link['deck_active']:
         abort(404)
 
-    deck_dir = os.path.join(UPLOAD_FOLDER, link['slug'])
-    return send_from_directory(deck_dir, path)
+    return storage.serve_file(link['slug'], path)
 
 
 # ── Heartbeat API ────────────────────────────────────────────────────
@@ -438,7 +405,7 @@ def heartbeat():
 
     db = get_db()
     db.execute(
-        'UPDATE views SET duration_seconds = ? WHERE id = ?',
+        'UPDATE views SET duration_seconds = %s WHERE id = %s',
         (int(duration), int(view_id))
     )
     db.commit()

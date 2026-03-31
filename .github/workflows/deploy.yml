@@ -31,4 +31,6 @@ jobs:
             --min-instances=1 \
             --max-instances=3 \
             --allow-unauthenticated \
-            --project=showroom-synaptiq-2026
+            --project=showroom-synaptiq-2026 \
+            --add-cloudsql-instances=${{ secrets.CLOUD_SQL_INSTANCE }} \
+            --set-env-vars="DATABASE_URL=${{ secrets.DATABASE_URL }},STORAGE_BACKEND=gcs,GCS_BUCKET=${{ secrets.GCS_BUCKET }},SECRET_KEY=${{ secrets.SECRET_KEY }}"

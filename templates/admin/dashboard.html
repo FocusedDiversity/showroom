@@ -33,7 +33,7 @@
             </div>
         </div>
         <div class="deck-meta">
-            Created {{ deck.created_at[:10] }}
+            Created {{ deck.created_at.strftime('%Y-%m-%d') }}
         </div>
     </div>
     {% endfor %}
