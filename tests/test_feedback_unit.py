@@ -178,3 +178,53 @@ class TestGetAllFeedbackValidation:
         data = resp.get_json()
         assert data['ok'] is True
         assert 'feedback' in data
+
+
+class TestFeedbackToggleEnforcement:
+    """API endpoints should reject requests when feedback_enabled is FALSE."""
+
+    def test_post_feedback_rejected_when_disabled(self, client, seed_deck):
+        """POST /api/feedback should return 403 for feedback-disabled links."""
+        with client.session_transaction() as sess:
+            sess[f"viewer_email_{seed_deck['nofb_token']}"] = seed_deck['nofb_viewer_email']
+
+        resp = client.post('/api/feedback', json={
+            'view_id': seed_deck['nofb_view_id'],
+            'slide_number': 1,
+            'comment': 'Should be rejected'
+        })
+        assert resp.status_code == 403
+        data = resp.get_json()
+        assert 'not enabled' in data['error'].lower()
+
+    def test_get_all_feedback_rejected_when_disabled(self, client, seed_deck):
+        """GET /api/feedback/all should return 403 for feedback-disabled links."""
+        with client.session_transaction() as sess:
+            sess[f"viewer_email_{seed_deck['nofb_token']}"] = seed_deck['nofb_viewer_email']
+
+        resp = client.get(f'/api/feedback/all?view_id={seed_deck["nofb_view_id"]}')
+        assert resp.status_code == 403
+        data = resp.get_json()
+        assert 'not enabled' in data['error'].lower()
+
+    def test_post_feedback_accepted_when_enabled(self, client, seed_deck):
+        """POST /api/feedback should work normally for feedback-enabled links."""
+        with client.session_transaction() as sess:
+            sess[f"viewer_email_{seed_deck['token']}"] = seed_deck['viewer_email']
+
+        resp = client.post('/api/feedback', json={
+            'view_id': seed_deck['view_id'],
+            'slide_number': 1,
+            'comment': 'Should be accepted'
+        })
+        assert resp.status_code == 200
+        assert resp.get_json()['ok'] is True
+
+    def test_get_all_feedback_accepted_when_enabled(self, client, seed_deck):
+        """GET /api/feedback/all should work normally for feedback-enabled links."""
+        with client.session_transaction() as sess:
+            sess[f"viewer_email_{seed_deck['token']}"] = seed_deck['viewer_email']
+
+        resp = client.get(f'/api/feedback/all?view_id={seed_deck["view_id"]}')
+        assert resp.status_code == 200
+        assert resp.get_json()['ok'] is True

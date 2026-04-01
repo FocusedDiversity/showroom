@@ -220,10 +220,12 @@ def admin_create_share(deck_id):
     if not deck:
         abort(404)
 
+    feedback_enabled = request.form.get('feedback_enabled') == 'on'
+
     token = secrets.token_urlsafe(16)
     db.execute(
-        'INSERT INTO share_links (deck_id, recipient_email, token) VALUES (%s, %s, %s)',
-        (deck_id, email, token)
+        'INSERT INTO share_links (deck_id, recipient_email, token, feedback_enabled) VALUES (%s, %s, %s, %s)',
+        (deck_id, email, token, feedback_enabled)
     )
     db.commit()
 
@@ -408,7 +410,8 @@ def viewer_deck(token):
     view_id = view['id'] if view else None
 
     return render_template('viewer/deck_view.html',
-                           token=token, title=link['title'], view_id=view_id)
+                           token=token, title=link['title'], view_id=view_id,
+                           feedback_enabled=bool(link['feedback_enabled']))
 
 
 @app.route('/v/<token>/raw')
@@ -509,9 +512,12 @@ def submit_feedback():
         return jsonify({'ok': False, 'error': 'View not found'}), 404
 
     # Validate session: find the token for this view's share link
-    link = db.execute('SELECT token FROM share_links WHERE id = %s', (view['share_link_id'],)).fetchone()
+    link = db.execute('SELECT token, feedback_enabled FROM share_links WHERE id = %s', (view['share_link_id'],)).fetchone()
     if not link:
         return jsonify({'ok': False, 'error': 'Not authorized'}), 403
+
+    if not link['feedback_enabled']:
+        return jsonify({'ok': False, 'error': 'Feedback is not enabled for this link'}), 403
 
     session_key = f"viewer_email_{link['token']}"
     viewer_email = session.get(session_key)
@@ -584,9 +590,12 @@ def get_all_feedback():
         return jsonify({'ok': False, 'error': 'View not found'}), 404
 
     # Validate session
-    link = db.execute('SELECT token, deck_id FROM share_links WHERE id = %s', (view['share_link_id'],)).fetchone()
+    link = db.execute('SELECT token, deck_id, feedback_enabled FROM share_links WHERE id = %s', (view['share_link_id'],)).fetchone()
     if not link:
         return jsonify({'ok': False, 'error': 'Not authorized'}), 403
+
+    if not link['feedback_enabled']:
+        return jsonify({'ok': False, 'error': 'Feedback is not enabled for this link'}), 403
 
     session_key = f"viewer_email_{link['token']}"
     viewer_email = session.get(session_key)

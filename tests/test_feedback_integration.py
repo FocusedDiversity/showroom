@@ -289,3 +289,43 @@ class TestFeedbackIsolation:
         assert resp.status_code == 200
         data = resp.get_json()
         assert len(data['feedback']) == 0
+
+
+class TestFeedbackToggleAdmin:
+    """Admin can create links with feedback enabled or disabled."""
+
+    def test_create_link_with_feedback_enabled(self, client, seed_deck):
+        resp = client.post(
+            f'/admin/deck/{seed_deck["deck_id"]}/share',
+            data={'email': 'fb-on@test.com', 'feedback_enabled': 'on'},
+            follow_redirects=True
+        )
+        assert resp.status_code == 200
+        assert b'fb-on@test.com' in resp.data
+
+    def test_create_link_without_feedback(self, client, seed_deck):
+        resp = client.post(
+            f'/admin/deck/{seed_deck["deck_id"]}/share',
+            data={'email': 'fb-off@test.com'},
+            follow_redirects=True
+        )
+        assert resp.status_code == 200
+        assert b'fb-off@test.com' in resp.data
+
+    def test_feedback_enabled_defaults_true_in_db(self, db_conn, seed_deck):
+        """The original seeded link should have feedback_enabled = TRUE."""
+        cur = db_conn.cursor()
+        row = cur.execute(
+            "SELECT feedback_enabled FROM share_links WHERE id = %s",
+            (seed_deck['link_id'],)
+        ).fetchone()
+        assert row['feedback_enabled'] is True
+
+    def test_feedback_disabled_link_has_false(self, db_conn, seed_deck):
+        """The no-feedback seeded link should have feedback_enabled = FALSE."""
+        cur = db_conn.cursor()
+        row = cur.execute(
+            "SELECT feedback_enabled FROM share_links WHERE id = %s",
+            (seed_deck['nofb_link_id'],)
+        ).fetchone()
+        assert row['feedback_enabled'] is False

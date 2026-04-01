@@ -75,12 +75,33 @@ def seed_deck(db_conn):
 
     db_conn.commit()
 
+    # Create a feedback-disabled share link on the same deck
+    nofb_token = f'test-nofb-token-{unique_suffix}'
+    cur.execute(
+        "INSERT INTO share_links (deck_id, recipient_email, token, feedback_enabled) VALUES (%s, %s, %s, %s) RETURNING id",
+        (deck_id, 'nofb@test.com', nofb_token, False)
+    )
+    nofb_link_id = cur.fetchone()['id']
+
+    cur.execute(
+        "INSERT INTO views (share_link_id, viewer_email, user_agent, ip_address, is_forwarded) "
+        "VALUES (%s, %s, %s, %s, %s) RETURNING id",
+        (nofb_link_id, 'nofb@test.com', 'TestAgent/1.0', '127.0.0.1', False)
+    )
+    nofb_view_id = cur.fetchone()['id']
+
+    db_conn.commit()
+
     data = {
         'deck_id': deck_id,
         'link_id': link_id,
         'view_id': view_id,
         'token': token,
         'viewer_email': 'recipient@test.com',
+        'nofb_link_id': nofb_link_id,
+        'nofb_view_id': nofb_view_id,
+        'nofb_token': nofb_token,
+        'nofb_viewer_email': 'nofb@test.com',
     }
 
     yield data

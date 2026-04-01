@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS share_links (
     token TEXT NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
+    feedback_enabled BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE
 );
 
