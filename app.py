@@ -564,6 +564,59 @@ def get_feedback():
     })
 
 
+def obfuscate_email(email):
+    """Obfuscate email: s***@acme.com"""
+    if not email or '@' not in email:
+        return '***'
+    local, domain = email.split('@', 1)
+    return local[0] + '***@' + domain if local else '***@' + domain
+
+
+@app.route('/api/feedback/all', methods=['GET'])
+def get_all_feedback():
+    view_id = request.args.get('view_id', type=int)
+    if not view_id:
+        return jsonify({'ok': False, 'error': 'Missing view_id'}), 400
+
+    db = get_db()
+    view = db.execute('SELECT id, viewer_email, share_link_id FROM views WHERE id = %s', (view_id,)).fetchone()
+    if not view:
+        return jsonify({'ok': False, 'error': 'View not found'}), 404
+
+    # Validate session
+    link = db.execute('SELECT token, deck_id FROM share_links WHERE id = %s', (view['share_link_id'],)).fetchone()
+    if not link:
+        return jsonify({'ok': False, 'error': 'Not authorized'}), 403
+
+    session_key = f"viewer_email_{link['token']}"
+    viewer_email = session.get(session_key)
+    if not viewer_email:
+        return jsonify({'ok': False, 'error': 'Not authorized'}), 403
+
+    # Get ALL feedback for this deck
+    feedback = db.execute('''
+        SELECT sf.id, sf.slide_number, sf.comment, sf.created_at,
+               v.viewer_email
+        FROM slide_feedback sf
+        JOIN views v ON v.id = sf.view_id
+        JOIN share_links sl ON sl.id = v.share_link_id
+        WHERE sl.deck_id = %s
+        ORDER BY sf.created_at ASC
+    ''', (link['deck_id'],)).fetchall()
+
+    return jsonify({
+        'ok': True,
+        'feedback': [{
+            'id': f['id'],
+            'slide_number': f['slide_number'],
+            'comment': f['comment'],
+            'viewer_email': 'You' if f['viewer_email'] == viewer_email else obfuscate_email(f['viewer_email']),
+            'is_own': f['viewer_email'] == viewer_email,
+            'created_at': f['created_at'].isoformat() if hasattr(f['created_at'], 'isoformat') else f['created_at'],
+        } for f in feedback],
+    })
+
+
 # ── Init DB on import (for gunicorn) ─────────────────────────────────
 
 init_db(app)

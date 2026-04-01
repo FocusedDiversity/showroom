@@ -64,16 +64,16 @@ function initFeedback(viewId) {
             : 'Feedback';
     }
 
-    // --- Load prior feedback for current slide ---
+    // --- Load all feedback for deck (own + others) ---
     function loadPriorFeedback() {
         panelPrior.innerHTML = '';
 
-        fetch('/api/feedback?view_id=' + viewId)
+        fetch('/api/feedback/all?view_id=' + viewId)
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (!data.ok) return;
 
-                // Cache all feedback
+                // Cache all feedback grouped by slide
                 feedbackCache = {};
                 data.feedback.forEach(function (f) {
                     if (!feedbackCache[f.slide_number]) feedbackCache[f.slide_number] = [];
@@ -97,15 +97,18 @@ function initFeedback(viewId) {
         } else {
             items.forEach(function (f) {
                 var div = document.createElement('div');
-                div.className = 'feedback-prior-item';
+                var isOwn = f.is_own !== false;
+                div.className = 'feedback-prior-item' + (isOwn ? '' : ' is-other');
+                var authorLabel = isOwn ? 'You' : escapeHtml(f.viewer_email || '');
                 div.innerHTML = '<p class="feedback-prior-text">' + escapeHtml(f.comment) + '</p>' +
-                    '<span class="feedback-prior-time">You, ' + timeAgo(f.created_at) + '</span>';
+                    '<span class="feedback-prior-time"><strong class="feedback-prior-author">' + authorLabel + '</strong> · ' + timeAgo(f.created_at) + '</span>';
                 panelPrior.appendChild(div);
             });
         }
 
-        // Update input placeholder
-        panelInput.placeholder = items.length > 0
+        // Update input placeholder — check if viewer has own comments on this slide
+        var hasOwn = items.some(function (f) { return f.is_own !== false; });
+        panelInput.placeholder = hasOwn
             ? 'Add another comment...'
             : 'Share your thoughts on this slide...';
     }
@@ -143,6 +146,8 @@ function initFeedback(viewId) {
                 feedbackCache[currentSlide].push({
                     id: data.feedback_id,
                     comment: comment,
+                    viewer_email: 'You',
+                    is_own: true,
                     created_at: new Date().toISOString()
                 });
 

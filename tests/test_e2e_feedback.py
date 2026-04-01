@@ -224,10 +224,10 @@ class TestFeedbackE2E:
         # Wait for confirmation to auto-dismiss
         page.wait_for_timeout(4000)
 
-        # Check prior feedback is shown
+        # Check prior feedback is shown (may not be first due to shared feedback)
         prior = page.locator('.feedback-prior-item')
         expect(prior.first).to_be_visible(timeout=5000)
-        expect(prior.first).to_contain_text('Prior feedback test')
+        expect(page.locator('.feedback-prior-item', has_text='Prior feedback test')).to_be_visible(timeout=5000)
 
     def test_navigate_slide_and_submit(self, page: Page, test_data):
         """Navigate to slide 2, submit feedback, verify slide label updates."""

@@ -167,6 +167,95 @@ class TestAnalyticsWithFeedback:
         assert 'created_at' in fb
 
 
+class TestSharedFeedback:
+    """GET /api/feedback/all — returns all feedback for the deck."""
+
+    def _auth_session(self, client, token, email):
+        with client.session_transaction() as sess:
+            sess[f"viewer_email_{token}"] = email
+
+    def test_all_feedback_returns_own_and_others(self, client, seed_deck, db_conn):
+        """Should return feedback from both the current viewer and others."""
+        # Viewer A submits feedback
+        self._auth_session(client, seed_deck['token'], seed_deck['viewer_email'])
+        client.post('/api/feedback', json={
+            'view_id': seed_deck['view_id'],
+            'slide_number': 1,
+            'comment': 'Viewer A comment'
+        })
+
+        # Create Viewer B and their feedback
+        cur = db_conn.cursor()
+        cur.execute(
+            "INSERT INTO views (share_link_id, viewer_email, user_agent, ip_address, is_forwarded) "
+            "VALUES (%s, %s, %s, %s, %s) RETURNING id",
+            (seed_deck['link_id'], 'viewerb@test.com', 'TestAgent', '127.0.0.1', True)
+        )
+        view_b_id = cur.fetchone()['id']
+        cur.execute(
+            "INSERT INTO slide_feedback (view_id, slide_number, comment) VALUES (%s, %s, %s)",
+            (view_b_id, 1, 'Viewer B comment')
+        )
+        db_conn.commit()
+
+        # Viewer A fetches all feedback
+        resp = client.get(f'/api/feedback/all?view_id={seed_deck["view_id"]}')
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data['ok'] is True
+
+        slide_1 = [f for f in data['feedback'] if f['slide_number'] == 1]
+        assert len(slide_1) >= 2
+
+        own = [f for f in slide_1 if f['is_own'] is True]
+        others = [f for f in slide_1 if f['is_own'] is False]
+        assert len(own) >= 1
+        assert len(others) >= 1
+        assert own[0]['viewer_email'] == 'You'
+
+    def test_other_emails_are_obfuscated(self, client, seed_deck, db_conn):
+        """Others' emails should be obfuscated (first char + *** + @domain)."""
+        cur = db_conn.cursor()
+        cur.execute(
+            "INSERT INTO views (share_link_id, viewer_email, user_agent, ip_address, is_forwarded) "
+            "VALUES (%s, %s, %s, %s, %s) RETURNING id",
+            (seed_deck['link_id'], 'sarah@acme.com', 'TestAgent', '127.0.0.1', True)
+        )
+        view_b_id = cur.fetchone()['id']
+        cur.execute(
+            "INSERT INTO slide_feedback (view_id, slide_number, comment) VALUES (%s, %s, %s)",
+            (view_b_id, 2, 'Other feedback')
+        )
+        db_conn.commit()
+
+        self._auth_session(client, seed_deck['token'], seed_deck['viewer_email'])
+        resp = client.get(f'/api/feedback/all?view_id={seed_deck["view_id"]}')
+        data = resp.get_json()
+
+        other_items = [f for f in data['feedback'] if f['is_own'] is False]
+        assert len(other_items) >= 1
+        # Check obfuscation pattern
+        email = other_items[0]['viewer_email']
+        assert '***@' in email
+        assert email.startswith('s***@acme.com')
+
+    def test_all_feedback_ordered_by_created_at(self, client, seed_deck, db_conn):
+        """Feedback should be ordered by created_at ascending."""
+        self._auth_session(client, seed_deck['token'], seed_deck['viewer_email'])
+
+        for i in range(3):
+            client.post('/api/feedback', json={
+                'view_id': seed_deck['view_id'],
+                'slide_number': 1,
+                'comment': f'Comment {i}'
+            })
+
+        resp = client.get(f'/api/feedback/all?view_id={seed_deck["view_id"]}')
+        data = resp.get_json()
+        timestamps = [f['created_at'] for f in data['feedback']]
+        assert timestamps == sorted(timestamps)
+
+
 class TestFeedbackIsolation:
     """Feedback should be scoped to the correct view/viewer."""
 

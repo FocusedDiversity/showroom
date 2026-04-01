@@ -579,8 +579,13 @@ a:hover { text-decoration: underline; }
     padding: 8px 12px;
     margin-bottom: 8px;
 }
+.feedback-prior-item.is-other {
+    background: var(--surface);
+    border-left: 3px solid var(--arctic);
+}
 .feedback-prior-text { font-size: 13px; color: var(--text); margin: 0; }
 .feedback-prior-time { font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block; }
+.feedback-prior-author { font-weight: 500; color: var(--text-secondary); }
 .feedback-prior-empty { font-size: 12px; color: var(--text-secondary); font-style: italic; }
 
 .feedback-input-row {

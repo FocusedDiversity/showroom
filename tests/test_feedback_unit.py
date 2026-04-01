@@ -152,3 +152,29 @@ class TestCommentEdgeCases:
         })
         assert resp.status_code == 200
         assert resp.get_json()['ok'] is True
+
+
+class TestGetAllFeedbackValidation:
+    """GET /api/feedback/all — input validation."""
+
+    def test_missing_view_id_param(self, client):
+        resp = client.get('/api/feedback/all')
+        assert resp.status_code == 400
+
+    def test_nonexistent_view_id(self, client):
+        resp = client.get('/api/feedback/all?view_id=999999')
+        assert resp.status_code == 404
+
+    def test_no_session_returns_403(self, client, seed_deck):
+        resp = client.get(f'/api/feedback/all?view_id={seed_deck["view_id"]}')
+        assert resp.status_code == 403
+
+    def test_valid_session_returns_200(self, client, seed_deck):
+        with client.session_transaction() as sess:
+            sess[f"viewer_email_{seed_deck['token']}"] = seed_deck['viewer_email']
+
+        resp = client.get(f'/api/feedback/all?view_id={seed_deck["view_id"]}')
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data['ok'] is True
+        assert 'feedback' in data
