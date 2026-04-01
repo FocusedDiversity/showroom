@@ -28,36 +28,81 @@
         <div class="stat-card-value" id="stat-forwarded">-</div>
         <div class="stat-card-label">Forwarded Views</div>
     </div>
+    <div class="stat-card">
+        <div class="stat-card-value" id="stat-feedback">-</div>
+        <div class="stat-card-label">Feedback Items</div>
+    </div>
 </div>
 
-<!-- Daily Chart -->
-<section class="section">
-    <h2>Views Over Time</h2>
-    <div class="chart-container" id="chart-container">
-        <div class="chart-empty">No view data yet</div>
-    </div>
-</section>
+<!-- Tabs -->
+<div class="analytics-tabs">
+    <button class="analytics-tab active" data-tab="views">Views</button>
+    <button class="analytics-tab" data-tab="feedback">Feedback</button>
+</div>
 
-<!-- Views Table -->
-<section class="section">
-    <h2>All Views</h2>
-    <table class="data-table" id="views-table">
+<!-- Views Tab -->
+<div class="analytics-tab-content active" id="tab-views">
+    <!-- Daily Chart -->
+    <section class="section">
+        <h2>Views Over Time</h2>
+        <div class="chart-container" id="chart-container">
+            <div class="chart-empty">No view data yet</div>
+        </div>
+    </section>
+
+    <!-- Views Table -->
+    <section class="section">
+        <h2>All Views</h2>
+        <table class="data-table" id="views-table">
+            <thead>
+                <tr>
+                    <th>Viewer</th>
+                    <th>Shared With</th>
+                    <th>Forwarded?</th>
+                    <th>Duration</th>
+                    <th>Last Slide</th>
+                    <th>Viewed At</th>
+                    <th>Device</th>
+                </tr>
+            </thead>
+            <tbody id="views-tbody">
+                <tr><td colspan="7" class="muted">Loading...</td></tr>
+            </tbody>
+        </table>
+    </section>
+</div>
+
+<!-- Feedback Tab -->
+<div class="analytics-tab-content" id="tab-feedback">
+    <div class="feedback-filters" id="feedback-filters" style="display:none;">
+        <span>Filter by slide:</span>
+        <select class="feedback-filter-select" id="feedback-filter-slide">
+            <option value="">All slides</option>
+        </select>
+        <span>Filter by viewer:</span>
+        <select class="feedback-filter-select" id="feedback-filter-viewer">
+            <option value="">All viewers</option>
+        </select>
+    </div>
+
+    <table class="data-table" id="feedback-table" style="display:none;">
         <thead>
             <tr>
+                <th>Slide</th>
                 <th>Viewer</th>
-                <th>Shared With</th>
-                <th>Forwarded?</th>
-                <th>Duration</th>
-                <th>Last Slide</th>
-                <th>Viewed At</th>
-                <th>Device</th>
+                <th>Feedback</th>
+                <th>Date</th>
             </tr>
         </thead>
-        <tbody id="views-tbody">
-            <tr><td colspan="7" class="muted">Loading...</td></tr>
-        </tbody>
+        <tbody id="feedback-tbody"></tbody>
     </table>
-</section>
+
+    <div class="feedback-empty" id="feedback-empty">
+        <div class="feedback-empty-icon">&#x1F4AC;</div>
+        <p>No feedback submitted yet for this deck.</p>
+        <p class="hint">Feedback will appear here as viewers leave comments on individual slides.</p>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}

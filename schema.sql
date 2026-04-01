@@ -45,3 +45,14 @@ CREATE INDEX IF NOT EXISTS idx_share_links_deck_id ON share_links(deck_id);
 CREATE INDEX IF NOT EXISTS idx_views_share_link_id ON views(share_link_id);
 CREATE INDEX IF NOT EXISTS idx_views_viewer_email ON views(viewer_email);
 CREATE INDEX IF NOT EXISTS idx_decks_slug ON decks(slug);
+
+CREATE TABLE IF NOT EXISTS slide_feedback (
+    id SERIAL PRIMARY KEY,
+    view_id INTEGER NOT NULL,
+    slide_number INTEGER NOT NULL,
+    comment TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (view_id) REFERENCES views(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_slide_feedback_view_id ON slide_feedback(view_id);

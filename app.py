@@ -292,6 +292,17 @@ def admin_analytics_api(deck_id):
         ORDER BY day
     ''', (deck_id,)).fetchall()
 
+    # Feedback
+    feedback = db.execute('''
+        SELECT sf.id, sf.slide_number, sf.comment, sf.created_at,
+               v.viewer_email
+        FROM slide_feedback sf
+        JOIN views v ON v.id = sf.view_id
+        JOIN share_links sl ON sl.id = v.share_link_id
+        WHERE sl.deck_id = %s
+        ORDER BY sf.created_at DESC
+    ''', (deck_id,)).fetchall()
+
     return jsonify({
         'summary': {
             'total_views': summary['total_views'],
@@ -312,6 +323,14 @@ def admin_analytics_api(deck_id):
             'total_slides': v['total_slides'],
         } for v in views],
         'daily': [{'day': d['day'], 'count': d['count']} for d in daily],
+        'feedback': [{
+            'id': f['id'],
+            'slide_number': f['slide_number'],
+            'viewer_email': f['viewer_email'],
+            'comment': f['comment'],
+            'created_at': f['created_at'].isoformat() if hasattr(f['created_at'], 'isoformat') else f['created_at'],
+        } for f in feedback],
+        'feedback_count': len(feedback),
     })
 
 
@@ -461,6 +480,88 @@ def heartbeat():
     db.commit()
 
     return jsonify({'ok': True})
+
+
+# ── Feedback API ────────────────────────────────────────────────────
+
+@app.route('/api/feedback', methods=['POST'])
+def submit_feedback():
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({'ok': False, 'error': 'Invalid request'}), 400
+
+    view_id = data.get('view_id')
+    slide_number = data.get('slide_number')
+    comment = (data.get('comment') or '').strip()
+
+    if not view_id or not slide_number or not comment:
+        return jsonify({'ok': False, 'error': 'Missing required fields'}), 400
+
+    if len(comment) > 1000:
+        return jsonify({'ok': False, 'error': 'Comment too long (max 1000 chars)'}), 400
+
+    if slide_number < 1:
+        return jsonify({'ok': False, 'error': 'Invalid slide number'}), 400
+
+    db = get_db()
+    view = db.execute('SELECT id, viewer_email, share_link_id FROM views WHERE id = %s', (int(view_id),)).fetchone()
+    if not view:
+        return jsonify({'ok': False, 'error': 'View not found'}), 404
+
+    # Validate session: find the token for this view's share link
+    link = db.execute('SELECT token FROM share_links WHERE id = %s', (view['share_link_id'],)).fetchone()
+    if not link:
+        return jsonify({'ok': False, 'error': 'Not authorized'}), 403
+
+    session_key = f"viewer_email_{link['token']}"
+    viewer_email = session.get(session_key)
+    if not viewer_email or viewer_email != view['viewer_email']:
+        return jsonify({'ok': False, 'error': 'Not authorized'}), 403
+
+    row = db.execute(
+        'INSERT INTO slide_feedback (view_id, slide_number, comment) VALUES (%s, %s, %s) RETURNING id',
+        (int(view_id), int(slide_number), comment)
+    ).fetchone()
+    db.commit()
+
+    return jsonify({'ok': True, 'feedback_id': row['id']})
+
+
+@app.route('/api/feedback', methods=['GET'])
+def get_feedback():
+    view_id = request.args.get('view_id', type=int)
+    if not view_id:
+        return jsonify({'ok': False, 'error': 'Missing view_id'}), 400
+
+    db = get_db()
+    view = db.execute('SELECT id, viewer_email, share_link_id FROM views WHERE id = %s', (view_id,)).fetchone()
+    if not view:
+        return jsonify({'ok': False, 'error': 'View not found'}), 404
+
+    # Validate session
+    link = db.execute('SELECT token FROM share_links WHERE id = %s', (view['share_link_id'],)).fetchone()
+    if not link:
+        return jsonify({'ok': False, 'error': 'Not authorized'}), 403
+
+    session_key = f"viewer_email_{link['token']}"
+    viewer_email = session.get(session_key)
+    if not viewer_email or viewer_email != view['viewer_email']:
+        return jsonify({'ok': False, 'error': 'Not authorized'}), 403
+
+    feedback = db.execute(
+        'SELECT id, slide_number, comment, created_at FROM slide_feedback WHERE view_id = %s ORDER BY created_at ASC',
+        (view_id,)
+    ).fetchall()
+
+    return jsonify({
+        'ok': True,
+        'feedback': [{
+            'id': f['id'],
+            'slide_number': f['slide_number'],
+            'comment': f['comment'],
+            'created_at': f['created_at'].isoformat() if hasattr(f['created_at'], 'isoformat') else f['created_at'],
+        } for f in feedback]
+    })
 
 
 # ── Init DB on import (for gunicorn) ─────────────────────────────────
