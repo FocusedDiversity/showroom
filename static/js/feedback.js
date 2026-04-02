@@ -73,11 +73,25 @@ function initFeedback(viewId) {
             .then(function (data) {
                 if (!data.ok) return;
 
-                // Cache all feedback grouped by slide
+                // Collect pending optimistic entries before replacing cache
+                var pendingItems = [];
+                Object.keys(feedbackCache).forEach(function (slide) {
+                    feedbackCache[slide].forEach(function (f) {
+                        if (f._pending) pendingItems.push({ slide: parseInt(slide), item: f });
+                    });
+                });
+
+                // Replace cache with server data
                 feedbackCache = {};
                 data.feedback.forEach(function (f) {
                     if (!feedbackCache[f.slide_number]) feedbackCache[f.slide_number] = [];
                     feedbackCache[f.slide_number].push(f);
+                });
+
+                // Re-add pending optimistic entries that aren't yet in server data
+                pendingItems.forEach(function (p) {
+                    if (!feedbackCache[p.slide]) feedbackCache[p.slide] = [];
+                    feedbackCache[p.slide].push(p.item);
                 });
 
                 renderPrior();
@@ -98,7 +112,8 @@ function initFeedback(viewId) {
             items.forEach(function (f) {
                 var div = document.createElement('div');
                 var isOwn = f.is_own !== false;
-                div.className = 'feedback-prior-item' + (isOwn ? '' : ' is-other');
+                var pendingClass = f._pending ? ' is-pending' : '';
+                div.className = 'feedback-prior-item' + (isOwn ? '' : ' is-other') + pendingClass;
                 var authorLabel = isOwn ? 'You' : escapeHtml(f.viewer_email || '');
                 div.innerHTML = '<p class="feedback-prior-text">' + escapeHtml(f.comment) + '</p>' +
                     '<span class="feedback-prior-time"><strong class="feedback-prior-author">' + authorLabel + '</strong> · ' + timeAgo(f.created_at) + '</span>';
@@ -126,38 +141,79 @@ function initFeedback(viewId) {
         var comment = panelInput.value.trim();
         if (!comment || !currentSlide) return;
 
-        panelSend.disabled = true;
+        var slideAtSubmit = currentSlide;
+        var tempId = '_temp_' + Math.random().toString(36).slice(2);
 
+        // Optimistic: add to cache and render immediately
+        if (!feedbackCache[slideAtSubmit]) feedbackCache[slideAtSubmit] = [];
+        feedbackCache[slideAtSubmit].push({
+            id: tempId,
+            comment: comment,
+            viewer_email: 'You',
+            is_own: true,
+            created_at: new Date().toISOString(),
+            _pending: true
+        });
+
+        panelInput.value = '';
+        renderPrior();
+        showConfirmation();
+
+        // Fire API in background
         fetch('/api/feedback', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 view_id: viewId,
-                slide_number: currentSlide,
+                slide_number: slideAtSubmit,
                 comment: comment
             })
         })
         .then(function (r) { return r.json(); })
         .then(function (data) {
-            panelSend.disabled = false;
             if (data.ok) {
-                // Add to cache
-                if (!feedbackCache[currentSlide]) feedbackCache[currentSlide] = [];
-                feedbackCache[currentSlide].push({
-                    id: data.feedback_id,
-                    comment: comment,
-                    viewer_email: 'You',
-                    is_own: true,
-                    created_at: new Date().toISOString()
-                });
-
-                panelInput.value = '';
-                showConfirmation();
+                // Replace temp ID with real ID, clear pending
+                var items = feedbackCache[slideAtSubmit] || [];
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].id === tempId) {
+                        items[i].id = data.feedback_id;
+                        delete items[i]._pending;
+                        break;
+                    }
+                }
+                renderPrior();
+            } else {
+                rollbackOptimistic(slideAtSubmit, tempId, data.error || 'Failed to save feedback.');
             }
         })
         .catch(function () {
-            panelSend.disabled = false;
+            rollbackOptimistic(slideAtSubmit, tempId, 'Network error. Please try again.');
         });
+    }
+
+    function rollbackOptimistic(slide, tempId, errorMsg) {
+        var items = feedbackCache[slide] || [];
+        feedbackCache[slide] = items.filter(function (f) { return f.id !== tempId; });
+        renderPrior();
+        showError(errorMsg);
+    }
+
+    function showError(message) {
+        // Remove any existing error
+        var existing = panel.querySelector('.feedback-error');
+        if (existing) existing.remove();
+
+        var errDiv = document.createElement('div');
+        errDiv.className = 'feedback-error';
+        errDiv.textContent = message;
+
+        // Insert after the input row
+        var inputRow = panelInput.parentElement;
+        inputRow.parentElement.insertBefore(errDiv, inputRow.nextSibling);
+
+        setTimeout(function () {
+            if (errDiv.parentElement) errDiv.remove();
+        }, 4000);
     }
 
     // --- Confirmation ---
