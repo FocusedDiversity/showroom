@@ -1,0 +1,1990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synaptiq — Building Your Data Governance Foundation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,300;0,400;0,500;0,600;0,700&family=Quicksand:wght@300;400;500;600;700&family=Herr+Von+Muellerhoff&family=Abril+Fatface&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    font-family: 'Quicksand', sans-serif; background: #000;
+  }
+
+  /* ── Nav ── */
+  .nav-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 56px;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    z-index: 1000; border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .nav-btn {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+    color: #fff; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 600;
+    padding: 8px 20px; border-radius: 8px; cursor: pointer;
+    transition: all 0.2s; user-select: none;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,0.15); }
+  .nav-btn.disabled { opacity: 0.3; pointer-events: none; }
+  .slide-indicator { font-size: 13px; font-weight: 500; color: #A59B93; min-width: 80px; text-align: center; }
+  .nav-dots { display: flex; gap: 8px; margin: 0 12px; }
+  .nav-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); cursor: pointer; transition: all 0.3s;
+  }
+  .nav-dot.active { background: #F7CFA5; transform: scale(1.3); }
+  .nav-dot:hover { background: rgba(255,255,255,0.3); }
+  .kbd-hint {
+    position: fixed; bottom: 64px; right: 20px;
+    font-size: 11px; color: #5A524C; z-index: 1000;
+  }
+  .kbd-hint kbd {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px; padding: 2px 6px; font-family: 'Quicksand', sans-serif; font-size: 10px;
+  }
+
+  /* ── Deck ── */
+  .deck {
+    width: 100%; height: calc(100% - 56px); position: relative;
+    display: flex; align-items: center; justify-content: center; background: #000;
+  }
+  .slide-frame {
+    width: 1280px; height: 720px; transform-origin: center center; position: relative;
+  }
+  .slide {
+    position: absolute; top: 0; left: 0; width: 1280px; height: 720px;
+    opacity: 0; transition: opacity 0.45s ease; pointer-events: none;
+  }
+  .slide.active { opacity: 1; pointer-events: auto; cursor: pointer; }
+
+  /* ── Shared ── */
+  .top-bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, #A1B8CA, #F7CFA5, #F1DCD0);
+  }
+  .section-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 3px;
+    text-transform: uppercase; margin-bottom: 12px;
+  }
+  .page-num { font-size: 13px; color: #A59B93; font-weight: 500; }
+  .page-num-dark { font-size: 13px; color: #5A524C; font-weight: 500; }
+
+  /* ══════════════════════════════════════
+     SLIDE 1 — Personal Title
+     ══════════════════════════════════════ */
+  .s1 { background: #312A29; color: #fff; }
+  .s1 .grid-overlay {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+  .s1 .glow {
+    position: absolute; border-radius: 50%; filter: blur(120px);
+  }
+  .s1 .glow-1 { width: 600px; height: 600px; background: #A1B8CA; top: -200px; right: -100px; opacity: 0.15; }
+  .s1 .glow-2 { width: 600px; height: 600px; background: #8BA8BD; bottom: -250px; left: -150px; opacity: 0.08; }
+  .s1 .inner {
+    position: relative; z-index: 2; padding: 60px 80px; height: 100%;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .s1 .draft-tag {
+    font-size: 12px; font-weight: 500; letter-spacing: 2px;
+    text-transform: uppercase; color: #8A7F78; margin-bottom: 32px;
+  }
+  .s1 h1 {
+    font-size: 52px; font-weight: 800; line-height: 1.1;
+    letter-spacing: -1.5px; max-width: 780px; margin-bottom: 20px;
+  font-family: 'Zilla Slab', serif; }
+  .s1 h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, #F7CFA5, #A1B8CA);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .s1 .subtitle {
+    font-size: 21px; font-weight: 300; color: #A59B93;
+    max-width: 620px; line-height: 1.5; margin-bottom: 12px;
+  }
+  .s1 .prepared-for {
+    font-size: 15px; font-weight: 400; color: #8A7F78; margin-top: 20px;
+    max-width: 500px;
+  }
+  .s1 .aiq-tag {
+    display: inline-flex; align-items: center; gap: 10px; margin-top: 16px;
+    padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+    color: #F7CFA5; background: none; border-bottom: none; border-left: none; border-right: none;
+  }
+  .s1 .aiq-logo { height: 28px; width: auto; }
+  .s1 .aiq-label { white-space: nowrap; }
+  .s1 .prepared-for strong { color: #D4CCC7; font-weight: 600; }
+  .s1 .collage {
+    position: absolute; right: 0; top: 0; bottom: 0;
+    width: 55%; z-index: 3;
+    display: flex; align-items: center; justify-content: flex-end;
+    overflow: hidden;
+  }
+  .s1 .collage img {
+    width: 100%; height: auto;
+    object-fit: contain; object-position: right center;
+  }
+  .s1 .bot {
+    position: absolute; bottom: 24px; left: 80px; right: 80px;
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .s1 .bot-right {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  }
+  .s1 .logo-svg { height: 152px; }
+  .s1 .logo-svg .cls-1 { fill: #fff; }
+  .s1 .logo-svg .cls-2 { fill: #f7cfa5; }
+  .s1 .meta { font-size: 13px; color: #8A7F78; }
+
+  /* ══════════════════════════════════════
+     SLIDE 2 — AIQ Framework
+     ══════════════════════════════════════ */
+  .s2-aiq { background: #312A29; color: #fff; }
+  .s2-aiq .inner {
+    position: relative; z-index: 2;
+    padding: 48px 80px 44px; height: 100%;
+    display: flex; flex-direction: column;
+  }
+  .s2-aiq .section-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 3px;
+    text-transform: uppercase; color: #F7CFA5; margin-bottom: 10px;
+  }
+  .s2-aiq h1 {
+    font-size: 30px; font-weight: 800; line-height: 1.15;
+    letter-spacing: -0.5px; margin-bottom: 24px;
+  font-family: 'Zilla Slab', serif; }
+  .s2-aiq h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, #F7CFA5, #A1B8CA);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .s2-aiq .aiq-layout { display: flex; gap: 32px; flex: 1; align-items: center; }
+  .s2-aiq .wheel-container {
+    width: 480px; height: 440px; flex-shrink: 0;
+    position: relative;
+  }
+  .s2-aiq .wheel-svg { width: 100%; height: 100%; }
+  .s2-aiq .right-content { flex: 1; }
+  .s2-aiq .right-content p {
+    font-size: 15px; line-height: 1.7; color: #D4CCC7; margin-bottom: 16px;
+  }
+  .s2-aiq .right-content strong { color: #fff; }
+  .s2-aiq .gov-callout {
+    background: rgba(139,168,189,0.1);
+    border: 1px solid rgba(247,207,165,0.2);
+    border-left: 3px solid #F7CFA5;
+    border-radius: 0 10px 10px 0;
+    padding: 16px 20px; margin-top: 20px;
+  }
+  .s2-aiq .gov-callout h3 {
+    font-size: 14px; font-weight: 700; color: #F7CFA5; margin-bottom: 6px;
+  }
+  .s2-aiq .gov-callout p {
+    font-size: 13px; line-height: 1.6; color: #A59B93; margin-bottom: 0;
+  }
+  .s2-aiq .bot {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 14px;
+  }
+  .s2-aiq .page-num-dark { font-size: 13px; color: #312A29; font-weight: 700; }
+
+  /* ══════════════════════════════════════
+     SLIDE 3 — Sri's Situation
+     ══════════════════════════════════════ */
+  .s2 { background: #FAF8F5; color: #312A29; }
+  .s2 .left-accent {
+    position: absolute; top: 0; left: 0; width: 6px; height: 100%;
+    background: linear-gradient(180deg, #A1B8CA, #8BA8BD);
+  }
+  .s2 .inner {
+    padding: 52px 80px 48px; height: 100%;
+    display: flex; flex-direction: column;
+  }
+  .s2 .section-label { color: #8BA8BD; }
+  .s2 h1 {
+    font-size: 34px; font-weight: 800; line-height: 1.15;
+    letter-spacing: -0.5px; color: #312A29; margin-bottom: 36px; max-width: 700px;
+  font-family: 'Zilla Slab', serif; }
+  .s2 h1 em { font-style: normal; color: #A1B8CA; }
+  .s2 .cards { display: flex; gap: 24px; flex: 1; }
+  .s2 .card {
+    flex: 1; background: #fff; border-radius: 16px;
+    padding: 32px 28px; display: flex; flex-direction: column;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.03);
+    border: 1px solid #E2DFDB; position: relative; overflow: hidden;
+  }
+  .s2 .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .s2 .card:nth-child(1)::before { background: #A1B8CA; }
+  .s2 .card:nth-child(2)::before { background: #8BA8BD; }
+  .s2 .card:nth-child(3)::before { background: #F7CFA5; }
+  .s2 .card-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; margin-bottom: 18px;
+  }
+  .s2 .card:nth-child(1) .card-icon { background: rgba(161,184,202,0.08); color: #A1B8CA; }
+  .s2 .card:nth-child(2) .card-icon { background: rgba(139,168,189,0.08); color: #8BA8BD; }
+  .s2 .card:nth-child(3) .card-icon { background: rgba(247,207,165,0.08); color: #8BA8BD; }
+  .s2 .card-icon svg { width: 24px; height: 24px; }
+  .s2 .card h2 {
+    font-size: 17px; font-weight: 700; line-height: 1.3;
+    color: #312A29; margin-bottom: 12px;
+  }
+  .s2 .card p { font-size: 14px; line-height: 1.6; color: #5A524C; flex: 1; }
+  .s2 .card .synaptiq-line {
+    margin-top: auto; padding-top: 12px;
+    border-top: 1px solid #D4CCC7;
+    font-size: 13px; font-weight: 600; color: #A1B8CA; line-height: 1.5;
+    height: 3em;
+  }
+  .s2 .bot {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 28px;
+  }
+  .s2 .callout {
+    font-size: 14px; font-weight: 500; color: #8A7F78; font-style: italic;
+    max-width: 750px; line-height: 1.5; padding-left: 16px;
+    border-left: 3px solid #E2DFDB;
+  }
+
+  /* ══════════════════════════════════════
+     SLIDE 3 — Playbook + OCM
+     ══════════════════════════════════════ */
+  .s3 { background: #312A29; color: #fff; }
+  .s3 .glow {
+    position: absolute; width: 500px; height: 500px; border-radius: 50%;
+    filter: blur(140px); opacity: 0.1; background: #A1B8CA;
+    bottom: -200px; left: 50%; transform: translateX(-50%);
+  }
+  .s3 .inner {
+    position: relative; z-index: 2;
+    padding: 48px 80px 44px; height: 100%;
+    display: flex; flex-direction: column;
+  }
+  .s3 .section-label { color: #F7CFA5; }
+  .s3 .header-row {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 28px;
+  }
+  .s3 h1 { font-size: 32px; font-weight: 800; line-height: 1.15; letter-spacing: -0.5px; font-family: 'Zilla Slab', serif; }
+  .s3 h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, #F7CFA5, #A1B8CA);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .s3 .credential { text-align: right; margin-top: 4px; }
+  .s3 .credential p {
+    font-size: 13px; color: #A59B93; line-height: 1.6; font-style: italic;
+    max-width: 320px;
+  }
+  .s3 .layers { display: flex; gap: 16px; flex: 1; }
+  .s3 .layer {
+    flex: 1; border-radius: 14px; padding: 26px 22px;
+    display: flex; flex-direction: column; position: relative;
+    overflow: hidden; border: 1px solid rgba(255,255,255,0.06);
+  }
+  .s3 .layer-1 { background: rgba(161,184,202,0.12); }
+  .s3 .layer-2 { background: rgba(139,168,189,0.12); }
+  .s3 .layer-3 { background: rgba(247,207,165,0.12); }
+  .s3 .layer-4 { background: rgba(125,211,252,0.10); }
+  .s3 .layer-num {
+    width: 32px; height: 32px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; margin-bottom: 14px;
+  }
+  .s3 .layer-1 .layer-num { background: rgba(161,184,202,0.3); color: #C6E1D9; }
+  .s3 .layer-2 .layer-num { background: rgba(139,168,189,0.3); color: #F1DCD0; }
+  .s3 .layer-3 .layer-num { background: rgba(247,207,165,0.3); color: #E2E1E3; }
+  .s3 .layer-4 .layer-num { background: rgba(125,211,252,0.25); color: #E0F2FE; }
+  .s3 .layer h2 { font-size: 15px; font-weight: 700; line-height: 1.3; margin-bottom: 4px; }
+  .s3 .layer .sub {
+    font-size: 11px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 1px; color: #8A7F78; margin-bottom: 12px;
+  }
+  .s3 .layer p { font-size: 12.5px; line-height: 1.5; color: #A59B93; flex: 1; }
+  .s3 .layer .for-sri {
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 12px; color: #F7CFA5; font-weight: 600; line-height: 1.4;
+  }
+  /* OCM banner */
+  .s3 .ocm-banner {
+    margin-top: 20px;
+    background: linear-gradient(90deg, rgba(139,168,189,0.15), rgba(247,207,165,0.08));
+    border: 1px solid rgba(247,207,165,0.2);
+    border-radius: 12px;
+    padding: 18px 28px;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .s3 .ocm-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: rgba(247,207,165,0.15);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .s3 .ocm-icon svg { width: 22px; height: 22px; color: #F7CFA5; }
+  .s3 .ocm-text h3 {
+    font-size: 15px; font-weight: 700; margin-bottom: 4px;
+  }
+  .s3 .ocm-text h3 em {
+    font-style: normal;
+    background: linear-gradient(135deg, #F7CFA5, #A1B8CA);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .s3 .ocm-text p { font-size: 13px; color: #A59B93; line-height: 1.4; }
+  .s3 .bot {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 16px;
+  }
+
+  /* ══════════════════════════════════════
+     SLIDE 4 — Proof Points (reframed)
+     ══════════════════════════════════════ */
+  .s4 { background: #FAF8F5; color: #312A29; }
+  .s4 .inner {
+    padding: 52px 80px 48px; height: 100%;
+    display: flex; flex-direction: column;
+  }
+  .s4 .section-label { color: #8BA8BD; }
+  .s4 h1 {
+    font-size: 34px; font-weight: 800; line-height: 1.15;
+    letter-spacing: -0.5px; color: #312A29; margin-bottom: 32px;
+  font-family: 'Zilla Slab', serif; }
+  .s4 h1 em { font-style: normal; color: #A1B8CA; }
+  .s4 .cases { display: flex; flex-direction: column; gap: 16px; flex: 1; }
+  .s4 .case {
+    display: flex; background: #fff; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.03);
+    border: 1px solid #E2DFDB; flex: 1;
+  }
+  .s4 .case-accent { width: 5px; flex-shrink: 0; }
+  .s4 .case:nth-child(1) .case-accent { background: #A1B8CA; }
+  .s4 .case:nth-child(2) .case-accent { background: #8BA8BD; }
+  .s4 .case:nth-child(3) .case-accent { background: #F7CFA5; }
+  .s4 .case-inner {
+    display: flex; width: 100%; padding: 20px 28px;
+    align-items: center; gap: 28px;
+  }
+  .s4 .case-header { flex-shrink: 0; width: 160px; }
+  .s4 .case-header h3 { font-size: 15px; font-weight: 700; color: #312A29; margin-bottom: 4px; }
+  .s4 .tag {
+    display: inline-block; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.5px; padding: 3px 9px; border-radius: 6px; margin-top: 4px;
+  }
+  .s4 .case:nth-child(1) .tag { background: rgba(161,184,202,0.08); color: #A1B8CA; }
+  .s4 .case:nth-child(2) .tag { background: rgba(139,168,189,0.08); color: #8BA8BD; }
+  .s4 .case:nth-child(3) .tag { background: rgba(247,207,165,0.08); color: #494F5B; }
+  .s4 .divider { width: 1px; height: 56px; background: #E2DFDB; flex-shrink: 0; }
+  .s4 .col { flex: 1; }
+  .s4 .col .label {
+    font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; margin-bottom: 5px;
+  }
+  .s4 .col .label.sit { color: #A59B93; }
+  .s4 .col .label.out { color: #8BA8BD; }
+  .s4 .col .label.les { color: #A1B8CA; }
+  .s4 .col p { font-size: 13px; line-height: 1.45; color: #5A524C; }
+  .s4 .col.outcome p { color: #312A29; font-weight: 500; }
+  .s4 .col.lesson p { color: #A1B8CA; font-weight: 600; font-style: italic; font-size: 12.5px; }
+  .s4 .bot {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 20px;
+  }
+  .s4 .takeaway {
+    font-size: 14px; color: #8A7F78; font-style: italic;
+    max-width: 850px; padding-left: 16px; border-left: 3px solid #E2DFDB; line-height: 1.5;
+  }
+
+  /* ══════════════════════════════════════
+     SLIDE 5 — 90-Day Advisory
+     ══════════════════════════════════════ */
+  .s5 { background: #312A29; color: #fff; }
+  .s5 .glow {
+    position: absolute; width: 500px; height: 500px; border-radius: 50%;
+    filter: blur(140px); opacity: 0.08;
+  }
+  .s5 .glow-1 { background: #8BA8BD; top: -100px; right: -100px; }
+  .s5 .glow-2 { background: #A1B8CA; bottom: -200px; left: 200px; }
+  .s5 .inner {
+    position: relative; z-index: 2;
+    padding: 48px 80px 44px; height: 100%;
+    display: flex; flex-direction: column;
+  }
+  .s5 .section-label { color: #F7CFA5; }
+  .s5 h1 {
+    font-size: 32px; font-weight: 800; line-height: 1.15;
+    letter-spacing: -0.5px; margin-bottom: 28px;
+  font-family: 'Zilla Slab', serif; }
+  .s5 h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, #F7CFA5, #A1B8CA);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .s5 .timeline-full { display: flex; flex-direction: column; gap: 14px; flex: 1; }
+  .s5 .phase { flex: 1; display: flex; gap: 16px; align-items: stretch; }
+  .s5 .phase-ind {
+    display: flex; flex-direction: column; align-items: center;
+    width: 44px; flex-shrink: 0;
+  }
+  .s5 .phase-dot {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800; flex-shrink: 0;
+  }
+  .s5 .phase:nth-child(1) .phase-dot { background: rgba(161,184,202,0.3); color: #C6E1D9; }
+  .s5 .phase:nth-child(2) .phase-dot { background: rgba(139,168,189,0.3); color: #F1DCD0; }
+  .s5 .phase:nth-child(3) .phase-dot { background: rgba(247,207,165,0.3); color: #E2E1E3; }
+  .s5 .phase-line { flex: 1; width: 2px; background: rgba(255,255,255,0.08); margin: 4px auto; }
+  .s5 .phase-content {
+    flex: 1; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px; padding: 18px 22px;
+  }
+  .s5 .phase-weeks {
+    font-size: 11px; font-weight: 600; letter-spacing: 1px;
+    text-transform: uppercase; color: #F7CFA5; margin-bottom: 4px;
+  }
+  .s5 .phase-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .s5 .phase-desc { font-size: 12.5px; line-height: 1.5; color: #A59B93; margin-bottom: 8px; }
+  .s5 .phase-quick-win {
+    font-size: 12px; font-weight: 600; color: #F7CFA5;
+    padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); line-height: 1.35;
+  }
+
+  .s5 .bot {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 14px;
+  }
+  .s5 .closing { font-size: 14px; font-weight: 500; color: #8A7F78; font-style: italic; }
+
+  /* ══════════════════════════════════════
+     SLIDE 6 — What You Get + CTA
+     ══════════════════════════════════════ */
+  .s6 { background: #312A29; color: #fff; }
+  .s6 .glow {
+    position: absolute; width: 500px; height: 500px; border-radius: 50%;
+    filter: blur(140px); opacity: 0.08;
+  }
+  .s6 .glow-1 { background: #A1B8CA; top: -100px; left: -100px; }
+  .s6 .glow-2 { background: #8BA8BD; bottom: -150px; right: -50px; }
+  .s6 .inner {
+    position: relative; z-index: 2;
+    padding: 48px 80px 44px; height: 100%;
+    display: flex; flex-direction: column;
+  }
+  .s6 .section-label { color: #F7CFA5; }
+  .s6 h1 {
+    font-size: 32px; font-weight: 800; line-height: 1.15;
+    letter-spacing: -0.5px; margin-bottom: 28px;
+  font-family: 'Zilla Slab', serif; }
+  .s6 h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, #F7CFA5, #A1B8CA);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .s6 .s6-layout { display: flex; gap: 32px; flex: 1; }
+  .s6 .del-box {
+    flex: 1; background: rgba(139,168,189,0.08);
+    border: 1px solid rgba(247,207,165,0.15);
+    border-radius: 14px; padding: 28px 32px;
+  }
+  .s6 .del-box h3 {
+    font-size: 13px; font-weight: 600; letter-spacing: 2px;
+    text-transform: uppercase; color: #F7CFA5; margin-bottom: 20px;
+  }
+  .s6 .del-item { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+  .s6 .del-check {
+    width: 20px; height: 20px; border-radius: 5px;
+    background: rgba(247,207,165,0.15);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px;
+  }
+  .s6 .del-check svg { width: 12px; height: 12px; color: #F7CFA5; }
+  .s6 .del-text { font-size: 14px; line-height: 1.45; color: #D4CCC7; }
+  .s6 .s6-right { width: 380px; display: flex; flex-direction: column; gap: 16px; }
+  .s6 .team-box {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px; padding: 24px 28px; flex: 1;
+  }
+  .s6 .team-box h3 {
+    font-size: 12px; font-weight: 600; letter-spacing: 2px;
+    text-transform: uppercase; color: #8A7F78; margin-bottom: 14px;
+  }
+  .s6 .team-roles { display: flex; gap: 12px; }
+  .s6 .team-role {
+    flex: 1; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px; padding: 16px 14px; text-align: center;
+  }
+  .s6 .team-role .role-icon { font-size: 20px; margin-bottom: 6px; }
+  .s6 .team-role .role-name { font-size: 12px; font-weight: 600; color: #D4CCC7; line-height: 1.3; }
+  .s6 .cta-box {
+    background: linear-gradient(135deg, rgba(161,184,202,0.2), rgba(139,168,189,0.15));
+    border: 1px solid rgba(247,207,165,0.2);
+    border-radius: 14px; padding: 28px 32px; text-align: center; flex: 1;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .s6 .cta-text { font-size: 22px; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
+  .s6 .cta-sub { font-size: 14px; color: #A59B93; line-height: 1.5; }
+  .s6 .cta-email { margin-top: 12px; font-size: 16px; color: #F7CFA5; font-weight: 600; }
+  .s6 .bot {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 14px;
+  }
+  .s6 .closing { font-size: 14px; font-weight: 500; color: #8A7F78; font-style: italic; }
+
+  /* ══════════════════════════════════════
+     SLIDE 8 — Appendix Divider
+     ══════════════════════════════════════ */
+  .s-app { background: #312A29; color: #fff; }
+  .s-app .glow {
+    position: absolute; width: 700px; height: 700px; border-radius: 50%;
+    filter: blur(160px); opacity: 0.1; background: #A1B8CA;
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+  }
+  .s-app .inner {
+    position: relative; z-index: 2;
+    padding: 60px 80px; height: 100%;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    text-align: center;
+  }
+  .s-app h1 {
+    font-size: 56px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 16px;
+    background: linear-gradient(135deg, #F7CFA5, #A1B8CA);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  font-family: 'Zilla Slab', serif; }
+  .s-app .divider-line {
+    width: 80px; height: 3px; background: linear-gradient(90deg, #A1B8CA, #F7CFA5);
+    border-radius: 2px; margin-bottom: 16px;
+  }
+  .s-app .sub { font-size: 18px; color: #A59B93; font-weight: 300; }
+
+  /* ══════════════════════════════════════
+     SLIDE 9 — Governance Deep Dive
+     ══════════════════════════════════════ */
+  .s-gov { background: #FAF8F5; color: #312A29; }
+  .s-gov .left-accent {
+    position: absolute; top: 0; left: 0; width: 6px; height: 100%;
+    background: linear-gradient(180deg, #A1B8CA, #8BA8BD);
+  }
+  .s-gov .inner {
+    padding: 48px 80px 44px; height: 100%;
+    display: flex; flex-direction: column;
+  }
+  .s-gov .section-label { color: #8BA8BD; }
+  .s-gov h1 {
+    font-size: 30px; font-weight: 800; line-height: 1.15;
+    letter-spacing: -0.5px; color: #312A29; margin-bottom: 24px;
+  font-family: 'Zilla Slab', serif; }
+  .s-gov h1 em { font-style: normal; color: #A1B8CA; }
+  .s-gov .gov-grid { display: flex; gap: 20px; flex: 1; }
+  .s-gov .gov-pillar {
+    flex: 1; background: #fff; border-radius: 14px;
+    padding: 24px 22px; display: flex; flex-direction: column;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.03);
+    border: 1px solid #E2DFDB; position: relative; overflow: hidden;
+  }
+  .s-gov .gov-pillar::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: #A1B8CA;
+  }
+  .s-gov .gov-pillar h3 {
+    font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: #A1B8CA; margin-bottom: 10px;
+  }
+  .s-gov .gov-pillar p { font-size: 13px; line-height: 1.6; color: #5A524C; margin-bottom: 12px; }
+  .s-gov .gov-pillar ul { list-style: none; padding: 0; margin: 0; }
+  .s-gov .gov-pillar ul li {
+    font-size: 12.5px; line-height: 1.5; color: #5A524C;
+    padding: 5px 0; padding-left: 16px; position: relative;
+  }
+  .s-gov .gov-pillar ul li::before {
+    content: ''; position: absolute; left: 0; top: 11px;
+    width: 6px; height: 6px; border-radius: 50%; background: #8BA8BD;
+  }
+  .s-gov .maturity-bar {
+    margin-top: 20px; background: #fff; border-radius: 12px;
+    padding: 16px 24px; border: 1px solid #E2DFDB;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .s-gov .maturity-bar .mat-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: #8A7F78; white-space: nowrap;
+  }
+  .s-gov .maturity-stages { display: flex; gap: 3px; flex: 1; }
+  .s-gov .mat-stage {
+    flex: 1; text-align: center; padding: 8px 6px; border-radius: 6px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .s-gov .mat-stage.s-initial { background: #E2DFDB; color: #8A7F78; }
+  .s-gov .mat-stage.s-managed { background: #D4CCC7; color: #5A524C; }
+  .s-gov .mat-stage.s-defined { background: #A59B93; color: #fff; }
+  .s-gov .mat-stage.s-measured { background: #8BA8BD; color: #fff; }
+  .s-gov .mat-stage.s-optimizing { background: #A1B8CA; color: #fff; }
+  .s-gov .bot {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 16px;
+  }
+
+  /* ══════════════════════════════════════
+     SLIDE 10 — Discovery Workshops
+     ══════════════════════════════════════ */
+  .s-disc { background: #312A29; color: #fff; }
+  .s-disc .glow {
+    position: absolute; width: 500px; height: 500px; border-radius: 50%;
+    filter: blur(140px); opacity: 0.08; background: #8BA8BD;
+    top: -100px; right: -100px;
+  }
+  .s-disc .inner {
+    position: relative; z-index: 2;
+    padding: 48px 80px 44px; height: 100%;
+    display: flex; flex-direction: column;
+  }
+  .s-disc .section-label { color: #F7CFA5; }
+  .s-disc h1 {
+    font-size: 30px; font-weight: 800; line-height: 1.15;
+    letter-spacing: -0.5px; margin-bottom: 24px;
+  font-family: 'Zilla Slab', serif; }
+  .s-disc h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, #F7CFA5, #A1B8CA);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .s-disc .disc-layout { display: flex; gap: 20px; flex: 1; }
+  .s-disc .disc-col { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+  .s-disc .disc-card {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 20px 22px; flex: 1;
+  }
+  .s-disc .disc-card h3 {
+    font-size: 14px; font-weight: 700; color: #F7CFA5; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .s-disc .disc-card h3 .num {
+    width: 24px; height: 24px; border-radius: 7px;
+    background: rgba(247,207,165,0.15); display: flex; align-items: center;
+    justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;
+  }
+  .s-disc .disc-card p { font-size: 12.5px; line-height: 1.55; color: #A59B93; }
+  .s-disc .disc-card ul { list-style: none; padding: 0; margin: 6px 0 0 0; }
+  .s-disc .disc-card ul li {
+    font-size: 12px; color: #D4CCC7; padding: 3px 0 3px 16px;
+    position: relative; line-height: 1.5;
+  }
+  .s-disc .disc-card ul li::before {
+    content: ''; position: absolute; left: 0; top: 9px;
+    width: 5px; height: 5px; border-radius: 50%; background: #F7CFA5;
+  }
+  .s-disc .stakeholder-box {
+    background: rgba(139,168,189,0.1); border: 1px solid rgba(247,207,165,0.2);
+    border-radius: 12px; padding: 20px 22px;
+  }
+  .s-disc .stakeholder-box h3 {
+    font-size: 13px; font-weight: 700; color: #F7CFA5; margin-bottom: 10px;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .s-disc .stake-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+  .s-disc .stake-tag {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; padding: 8px 14px; font-size: 12px; color: #D4CCC7; font-weight: 500;
+  }
+  .s-disc .bot {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 14px;
+  }
+
+  /* ══════════════════════════════════════
+     SLIDE 11 — Data Product Rubrics
+     ══════════════════════════════════════ */
+  .s-rubric { background: #FAF8F5; color: #312A29; }
+  .s-rubric .left-accent {
+    position: absolute; top: 0; left: 0; width: 6px; height: 100%;
+    background: linear-gradient(180deg, #A1B8CA, #8BA8BD);
+  }
+  .s-rubric .inner {
+    padding: 48px 80px 44px; height: 100%;
+    display: flex; flex-direction: column;
+  }
+  .s-rubric .section-label { color: #8BA8BD; }
+  .s-rubric h1 {
+    font-size: 30px; font-weight: 800; line-height: 1.15;
+    letter-spacing: -0.5px; color: #312A29; margin-bottom: 20px;
+  font-family: 'Zilla Slab', serif; }
+  .s-rubric h1 em { font-style: normal; color: #A1B8CA; }
+  .s-rubric .rubric-table {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    background: #fff; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.03);
+    border: 1px solid #E2DFDB;
+  }
+  .s-rubric .rubric-table th {
+    font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    padding: 14px 16px; text-align: left; border-bottom: 2px solid #E2DFDB;
+  }
+  .s-rubric .rubric-table th:first-child { color: #312A29; }
+  .s-rubric .rubric-table th:not(:first-child) { color: #A1B8CA; text-align: center; }
+  .s-rubric .rubric-table td {
+    font-size: 12.5px; line-height: 1.45; padding: 12px 16px; color: #5A524C;
+    border-bottom: 1px solid #F1F5F9;
+  }
+  .s-rubric .rubric-table td:not(:first-child) { text-align: center; }
+  .s-rubric .rubric-table tr:last-child td { border-bottom: none; }
+  .s-rubric .rubric-table .criterion { font-weight: 600; color: #312A29; }
+  .s-rubric .rubric-table .score {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 8px;
+    font-size: 12px; font-weight: 700;
+  }
+  .s-rubric .score.s1 { background: #F6F2D6; color: #A1B8CA; }
+  .s-rubric .score.s2 { background: #E2E1E3; color: #494F5B; }
+  .s-rubric .score.s3 { background: #F1DCD0; color: #494F5B; }
+  .s-rubric .rubric-note {
+    margin-top: 16px; padding: 14px 20px;
+    background: rgba(139,168,189,0.06); border-left: 3px solid #8BA8BD;
+    border-radius: 0 10px 10px 0; font-size: 13px; color: #5A524C; line-height: 1.6;
+  }
+  .s-rubric .bot {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 16px;
+  }
+
+  /* ══════════════════════════════════════
+     SLIDE 12 — Governance Metrics
+     ══════════════════════════════════════ */
+  .s-metrics { background: #312A29; color: #fff; }
+  .s-metrics .glow {
+    position: absolute; width: 500px; height: 500px; border-radius: 50%;
+    filter: blur(140px); opacity: 0.08;
+  }
+  .s-metrics .glow-1 { background: #A1B8CA; top: -100px; left: -100px; }
+  .s-metrics .glow-2 { background: #8BA8BD; bottom: -150px; right: -50px; }
+  .s-metrics .inner {
+    position: relative; z-index: 2;
+    padding: 48px 80px 44px; height: 100%;
+    display: flex; flex-direction: column;
+  }
+  .s-metrics .section-label { color: #F7CFA5; }
+  .s-metrics h1 {
+    font-size: 30px; font-weight: 800; line-height: 1.15;
+    letter-spacing: -0.5px; margin-bottom: 20px;
+  font-family: 'Zilla Slab', serif; }
+  .s-metrics h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, #F7CFA5, #A1B8CA);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .s-metrics .bsc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; flex: 1; }
+  .s-metrics .bsc-quad {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px; padding: 22px 24px; display: flex; flex-direction: column;
+  }
+  .s-metrics .bsc-quad h3 {
+    font-size: 14px; font-weight: 700; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .s-metrics .bsc-quad h3 .q-icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  .s-metrics .bsc-quad:nth-child(1) h3 { color: #F7CFA5; }
+  .s-metrics .bsc-quad:nth-child(1) .q-icon { background: rgba(247,207,165,0.15); }
+  .s-metrics .bsc-quad:nth-child(2) h3 { color: #8BA8BD; }
+  .s-metrics .bsc-quad:nth-child(2) .q-icon { background: rgba(139,168,189,0.15); }
+  .s-metrics .bsc-quad:nth-child(3) h3 { color: #F1DCD0; }
+  .s-metrics .bsc-quad:nth-child(3) .q-icon { background: rgba(125,211,252,0.15); }
+  .s-metrics .bsc-quad:nth-child(4) h3 { color: #C6E1D9; }
+  .s-metrics .bsc-quad:nth-child(4) .q-icon { background: rgba(147,197,253,0.15); }
+  .s-metrics .bsc-quad .topline-kpi {
+    font-size: 11.5px; font-weight: 600; letter-spacing: 0.5px;
+    padding: 6px 10px; border-radius: 6px; margin-bottom: 10px;
+    background: rgba(255,255,255,0.04); border-left: 3px solid;
+  }
+  .s-metrics .bsc-quad:nth-child(1) .topline-kpi { border-color: #F7CFA5; color: #F7CFA5; }
+  .s-metrics .bsc-quad:nth-child(2) .topline-kpi { border-color: #8BA8BD; color: #8BA8BD; }
+  .s-metrics .bsc-quad:nth-child(3) .topline-kpi { border-color: #F1DCD0; color: #F1DCD0; }
+  .s-metrics .bsc-quad:nth-child(4) .topline-kpi { border-color: #C6E1D9; color: #C6E1D9; }
+  .s-metrics .bsc-quad ul { list-style: none; padding: 0; margin: 0; flex: 1; }
+  .s-metrics .bsc-quad ul li {
+    font-size: 12.5px; color: #D4CCC7; padding: 4px 0 4px 16px;
+    position: relative; line-height: 1.5;
+  }
+  .s-metrics .bsc-quad ul li::before {
+    content: ''; position: absolute; left: 0; top: 10px;
+    width: 5px; height: 5px; border-radius: 50%;
+  }
+  .s-metrics .bsc-quad:nth-child(1) ul li::before { background: #F7CFA5; }
+  .s-metrics .bsc-quad:nth-child(2) ul li::before { background: #8BA8BD; }
+  .s-metrics .bsc-quad:nth-child(3) ul li::before { background: #F1DCD0; }
+  .s-metrics .bsc-quad:nth-child(4) ul li::before { background: #C6E1D9; }
+  .s-metrics .bot {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 14px;
+  }
+
+  /* ══════════════════════════════════════
+     SLIDE 13 — Topline KPI Roll-Up
+     ══════════════════════════════════════ */
+  .s-rollup { background: #FAF8F5; color: #312A29; }
+  .s-rollup .inner {
+    position: relative; z-index: 2;
+    padding: 48px 80px 44px; height: 100%;
+    display: flex; flex-direction: column;
+  }
+  .s-rollup .section-label { color: #A1B8CA; }
+  .s-rollup h1 { font-size: 28px; font-weight: 800; line-height: 1.2; margin-bottom: 14px; letter-spacing: -0.5px; font-family: 'Zilla Slab', serif; }
+  .s-rollup h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, #F7CFA5, #A1B8CA);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .s-rollup .rollup-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex: 1;
+  }
+  .s-rollup .rollup-card {
+    background: #fff; border: 1px solid #E2DFDB; border-radius: 14px;
+    padding: 14px 18px; display: flex; flex-direction: column; position: relative;
+    overflow: hidden;
+  }
+  .s-rollup .rollup-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  }
+  .s-rollup .rollup-card:nth-child(1)::before { background: #F7CFA5; }
+  .s-rollup .rollup-card:nth-child(2)::before { background: #8BA8BD; }
+  .s-rollup .rollup-card:nth-child(3)::before { background: #F1DCD0; }
+  .s-rollup .rollup-card:nth-child(4)::before { background: #C6E1D9; }
+  .s-rollup .rollup-card .card-category {
+    font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .s-rollup .rollup-card:nth-child(1) .card-category { color: #494F5B; }
+  .s-rollup .rollup-card:nth-child(2) .card-category { color: #494F5B; }
+  .s-rollup .rollup-card:nth-child(3) .card-category { color: #8BA8BD; }
+  .s-rollup .rollup-card:nth-child(4) .card-category { color: #1D4ED8; }
+  .s-rollup .rollup-card .kpi-name {
+    font-size: 15px; font-weight: 800; color: #312A29; margin-bottom: 5px; line-height: 1.2;
+  }
+  .s-rollup .rollup-card .kpi-desc {
+    font-size: 11.5px; color: #5A524C; line-height: 1.5; margin-bottom: 6px; flex: 1;
+  }
+  .s-rollup .rollup-card .feeds-from {
+    font-size: 10.5px; color: #A59B93; border-top: 1px solid #E2DFDB; padding-top: 6px;
+  }
+  .s-rollup .rollup-card .feeds-from strong { color: #8A7F78; font-weight: 600; }
+  .s-rollup .rollup-card .ties-to {
+    font-size: 11px; color: #312A29; background: #FBF7F0; border: 1px solid #E2E1E3;
+    border-radius: 5px; padding: 5px 9px; margin-top: 8px;
+  }
+  .s-rollup .rollup-card .ties-to strong { font-weight: 700; color: #494F5B; }
+  .s-rollup .obj-banner {
+    display: flex; gap: 12px; margin-bottom: 16px;
+  }
+  .s-rollup .obj-pill {
+    flex: 1; background: #312A29; border-radius: 10px; padding: 12px 16px;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .s-rollup .obj-pill .obj-icon {
+    width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; margin-top: 1px;
+  }
+  .s-rollup .obj-pill:nth-child(1) .obj-icon { background: rgba(247,207,165,0.2); color: #F7CFA5; }
+  .s-rollup .obj-pill:nth-child(2) .obj-icon { background: rgba(139,168,189,0.2); color: #8BA8BD; }
+  .s-rollup .obj-pill:nth-child(3) .obj-icon { background: rgba(147,197,253,0.2); color: #C6E1D9; }
+  .s-rollup .obj-pill .obj-text { flex: 1; }
+  .s-rollup .obj-pill .obj-title {
+    font-size: 13px; font-weight: 700; color: #fff; line-height: 1.3; margin-bottom: 3px;
+  }
+  .s-rollup .obj-pill .obj-detail {
+    font-size: 10.5px; color: #A59B93; line-height: 1.4;
+  }
+  .s-rollup .bot {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 14px;
+  }
+</style>
+</head>
+<body>
+
+<div class="deck" id="deck">
+  <div class="slide-frame" id="slideFrame">
+
+    <!-- ═══ SLIDE 1 — Personal Title ═══ -->
+    <div class="slide s1 active" data-slide="1">
+      <div class="top-bar"></div>
+      <div class="glow glow-1"></div>
+      <div class="glow glow-2"></div>
+      <div class="grid-overlay"></div>
+      <div class="inner">
+        <div class="draft-tag">Draft for Discussion</div>
+        <h1>Building Your<br>Data Governance<br><em>Foundation</em></h1>
+        <p class="subtitle">What the first 90 days could look like, and how we'd work together</p>
+        <div class="prepared-for">
+          Prepared for <strong>Data Governance Leader</strong><br>
+          <svg style="height:45px; width:auto; margin-top:8px; display:inline-block; vertical-align:middle;" viewBox="0 0 200 50" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="8" width="200" height="34" rx="6" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="6 3"/><text x="100" y="31" text-anchor="middle" font-family="'Quicksand', sans-serif" font-size="14" font-weight="500" fill="rgba(255,255,255,0.5)" letter-spacing="2">PROSPECT LOGO</text></svg>
+        </div>
+        <div class="aiq-tag">
+          <span class="aiq-label">Powered by</span>
+          <svg class="aiq-logo" xmlns="http://www.w3.org/2000/svg" viewBox="564 406 282 123"><path style="stroke:none;fill-rule:nonzero;fill:rgb(100%,100%,100%);fill-opacity:1;" d="M 595.5625 466.25 L 622.617188 466.25 L 609.46875 438.113281 Z M 651.722656 473.589844 C 659.175781 489.09375 662.726562 495.246094 671.25 495.246094 L 671.25 496.191406 L 622.960938 496.191406 L 622.960938 495.246094 C 634.207031 495.246094 631.957031 486.25 626.160156 473.824219 L 623.171875 467.433594 L 594.988281 467.433594 C 586.367188 485.484375 589.429688 495.242188 602.371094 495.242188 L 602.371094 496.191406 L 568.996094 496.191406 L 568.996094 495.242188 C 577.636719 495.242188 584.972656 485.183594 594.203125 466.484375 L 621.542969 410.980469 Z"/><path style="stroke:none;fill-rule:nonzero;fill:rgb(100%,100%,100%);fill-opacity:1;" d="M 672.664062 496.191406 L 672.664062 495.246094 C 684.5 495.246094 684.5 488.734375 684.5 474.886719 L 684.5 434.652344 C 684.5 420.332031 684.5 414.296875 672.664062 414.296875 L 672.664062 413.347656 L 720.714844 413.347656 L 720.714844 414.296875 C 708.878906 414.296875 708.878906 420.332031 708.878906 434.652344 L 708.878906 474.886719 C 708.878906 488.734375 708.878906 495.246094 720.714844 495.246094 L 720.714844 496.191406 Z"/><path style="stroke:none;fill-rule:nonzero;fill:rgb(100%,100%,100%);fill-opacity:1;" d="M 767.929688 496.191406 C 784.855469 496.191406 786.035156 472.519531 786.035156 454.769531 C 786.035156 437.015625 784.855469 413.347656 767.929688 413.347656 C 751.007812 413.347656 749.824219 437.015625 749.824219 454.769531 C 749.824219 472.519531 751.007812 496.191406 767.929688 496.191406 M 822.960938 501.871094 C 820.359375 508.5 813.847656 523.882812 800.59375 523.882812 C 787.21875 523.882812 777.871094 514.179688 763.90625 514.179688 C 760.117188 514.179688 757.160156 516.074219 754.792969 520.570312 L 753.964844 520.09375 L 767.367188 497.132812 C 742.773438 496.90625 722.839844 481.550781 722.839844 454.769531 C 722.839844 427.789062 743.078125 412.402344 767.933594 412.402344 C 792.785156 412.402344 813.023438 427.789062 813.023438 454.769531 C 813.023438 481.570312 793.058594 496.929688 768.4375 497.136719 L 757.753906 515.480469 L 757.871094 515.480469 C 766.75 501.871094 776.574219 498.4375 783.082031 498.4375 C 792.785156 498.4375 806.394531 506.488281 814.207031 506.488281 C 818.585938 506.488281 820.714844 504.832031 822.371094 501.753906 Z"/><path style="stroke:none;fill-rule:nonzero;fill:rgb(100%,100%,100%);fill-opacity:1;" d="M 819.546875 414.785156 L 814.726562 414.785156 L 814.726562 413.386719 L 825.949219 413.386719 L 825.949219 414.785156 L 821.148438 414.785156 L 821.148438 426.347656 L 819.546875 426.347656 Z"/><path style="stroke:none;fill-rule:nonzero;fill:rgb(100%,100%,100%);fill-opacity:1;" d="M 827.925781 413.386719 L 829.347656 413.386719 L 832.503906 417.785156 C 833.1875 418.746094 834.609375 420.789062 834.609375 420.789062 C 834.609375 420.789062 836.027344 418.765625 836.707031 417.808594 L 839.867188 413.386719 L 841.289062 413.386719 L 841.289062 426.347656 L 839.6875 426.347656 L 839.6875 416.085938 C 839.6875 416.085938 839.347656 416.707031 838.730469 417.566406 L 834.609375 423.367188 L 830.46875 417.527344 C 829.886719 416.707031 829.527344 416.085938 829.527344 416.085938 L 829.527344 426.347656 L 827.925781 426.347656 Z"/></svg>
+          <span class="aiq-label">Framework</span>
+        </div>
+      </div>
+      <div class="collage">
+        <img src="synaptiq_collage.png" alt="">
+        <!-- Original SVG fallback preserved below, hidden -->
+        <svg viewBox="0 0 520 560" xmlns="http://www.w3.org/2000/svg" style="display:none;">
+          <defs>
+            <radialGradient id="warmGlow" cx="0.45" cy="0.4" r="0.55">
+              <stop offset="0%" stop-color="#F7CFA5" stop-opacity="0.12"/>
+              <stop offset="100%" stop-color="#312A29" stop-opacity="0"/>
+            </radialGradient>
+            <clipPath id="arcClip"><circle cx="270" cy="240" r="145"/></clipPath>
+          </defs>
+
+          <!-- Ambient warmth -->
+          <circle cx="270" cy="250" r="260" fill="url(#warmGlow)"/>
+
+          <!-- ── LAYER 1: Background grid/graph paper fragment ── -->
+          <g opacity="0.06" stroke="#A1B8CA" stroke-width="0.5" fill="none">
+            <rect x="120" y="80" width="280" height="320" rx="2"/>
+            <line x1="120" y1="120" x2="400" y2="120"/>
+            <line x1="120" y1="160" x2="400" y2="160"/>
+            <line x1="120" y1="200" x2="400" y2="200"/>
+            <line x1="120" y1="240" x2="400" y2="240"/>
+            <line x1="120" y1="280" x2="400" y2="280"/>
+            <line x1="120" y1="320" x2="400" y2="320"/>
+            <line x1="120" y1="360" x2="400" y2="360"/>
+            <line x1="160" y1="80" x2="160" y2="400"/>
+            <line x1="200" y1="80" x2="200" y2="400"/>
+            <line x1="240" y1="80" x2="240" y2="400"/>
+            <line x1="280" y1="80" x2="280" y2="400"/>
+            <line x1="320" y1="80" x2="320" y2="400"/>
+            <line x1="360" y1="80" x2="360" y2="400"/>
+          </g>
+
+          <!-- ── LAYER 2: Large Arctic circle accent (like reference collages) ── -->
+          <circle cx="160" cy="360" r="90" fill="#A1B8CA" opacity="0.1"/>
+          <circle cx="370" cy="140" r="55" fill="#B6DDED" opacity="0.08"/>
+
+          <!-- ── LAYER 3: Apricot crescent / moon (signature brand element) ── -->
+          <ellipse cx="320" cy="165" rx="85" ry="105" fill="#F7CFA5" opacity="0.22"/>
+
+          <!-- ── LAYER 4: Large Synaptiq butterfly logomark ── -->
+          <g transform="translate(260 220) scale(1.8)" opacity="0.7">
+            <!-- Left wing outer -->
+            <path d="M-5 2 C-18 -22 -55 -62 -68 -48 C-80 -35 -65 -8 -48 4 C-35 12 -18 14 -5 2Z" fill="none" stroke="#fff" stroke-width="1.4"/>
+            <!-- Left wing inner -->
+            <path d="M-4 1 C-14 -16 -38 -42 -48 -32 C-56 -24 -44 -5 -32 3 C-22 9 -12 9 -4 1Z" fill="none" stroke="#A1B8CA" stroke-width="0.9"/>
+            <!-- Left wing innermost -->
+            <path d="M-3 0 C-10 -10 -24 -26 -30 -20 C-35 -15 -28 -3 -20 2 C-14 5 -8 5 -3 0Z" fill="none" stroke="#A1B8CA" stroke-width="0.6" opacity="0.6"/>
+            <!-- Right wing outer — apricot filled -->
+            <path d="M5 2 C18 -22 55 -62 68 -48 C80 -35 65 -8 48 4 C35 12 18 14 5 2Z" fill="#F7CFA5" opacity="0.3" stroke="#F7CFA5" stroke-width="1.2"/>
+            <!-- Right wing inner -->
+            <path d="M4 1 C14 -16 38 -42 48 -32 C56 -24 44 -5 32 3 C22 9 12 9 4 1Z" fill="none" stroke="#F7CFA5" stroke-width="0.8" opacity="0.7"/>
+            <!-- Right wing innermost -->
+            <path d="M3 0 C10 -10 24 -26 30 -20 C35 -15 28 -3 20 2 C14 5 8 5 3 0Z" fill="#F7CFA5" opacity="0.15"/>
+            <!-- Body -->
+            <line x1="0" y1="-2" x2="0" y2="16" stroke="#fff" stroke-width="1" opacity="0.5"/>
+            <!-- Antenna right -->
+            <path d="M0 -2 C8 -12 18 -22 24 -28" fill="none" stroke="#F7CFA5" stroke-width="0.7" opacity="0.6"/>
+            <!-- Antenna left -->
+            <path d="M0 -2 C-6 -10 -12 -18 -16 -24" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.4"/>
+          </g>
+
+          <!-- ── LAYER 5: Globe wireframe inside butterfly (brand motif) ── -->
+          <g opacity="0.12" fill="none" stroke="#fff" stroke-width="0.6">
+            <circle cx="260" cy="218" r="52"/>
+            <ellipse cx="260" cy="218" rx="52" ry="18"/>
+            <ellipse cx="260" cy="218" rx="52" ry="36"/>
+            <ellipse cx="260" cy="218" rx="18" ry="52"/>
+            <ellipse cx="260" cy="218" rx="36" ry="52"/>
+          </g>
+
+          <!-- ── LAYER 6: Botanical branch with apricot fruits ── -->
+          <g transform="translate(135 55)">
+            <!-- Main branch -->
+            <path d="M80 180 C75 150 68 110 90 70 C100 50 115 35 130 25" fill="none" stroke="#6B5A4E" stroke-width="2.5" opacity="0.6" stroke-linecap="round"/>
+            <!-- Branch fork -->
+            <path d="M85 130 C70 120 55 105 48 85" fill="none" stroke="#6B5A4E" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
+            <!-- Apricot fruit 1 -->
+            <circle cx="130" cy="22" r="18" fill="#F7CFA5" opacity="0.55"/>
+            <circle cx="130" cy="22" r="18" fill="none" stroke="#D4A46A" stroke-width="0.5" opacity="0.4"/>
+            <path d="M129 4 C131 4 132 7 130 8" fill="none" stroke="#6B5A4E" stroke-width="1" opacity="0.5"/>
+            <!-- Apricot fruit 2 -->
+            <circle cx="46" cy="80" r="15" fill="#F7CFA5" opacity="0.45"/>
+            <circle cx="46" cy="80" r="15" fill="none" stroke="#D4A46A" stroke-width="0.5" opacity="0.35"/>
+            <!-- Leaf 1 -->
+            <path d="M105 55 C120 40 140 42 145 52 C148 60 135 68 120 65 C110 63 105 58 105 55Z" fill="#4A6B45" opacity="0.4"/>
+            <line x1="108" y1="56" x2="140" y2="52" stroke="#3A5A38" stroke-width="0.4" opacity="0.3"/>
+            <!-- Leaf 2 -->
+            <path d="M62 105 C72 90 90 86 96 94 C100 100 90 110 78 110 C68 110 62 108 62 105Z" fill="#4A6B45" opacity="0.35"/>
+            <!-- Leaf 3 (larger, lower) -->
+            <path d="M75 145 C95 125 120 120 128 132 C134 142 118 158 98 158 C84 157 76 150 75 145Z" fill="#3D5E3A" opacity="0.3"/>
+            <line x1="78" y1="147" x2="124" y2="133" stroke="#2E4E2C" stroke-width="0.4" opacity="0.25"/>
+            <!-- Leaf 4 -->
+            <path d="M115 30 C125 18 142 16 146 24 C149 30 138 38 128 38 C120 37 116 34 115 30Z" fill="#5A7A55" opacity="0.35"/>
+          </g>
+
+          <!-- ── LAYER 7: Vintage hand pointing (engraving style) ── -->
+          <g transform="translate(330 310) scale(0.8)" opacity="0.25" fill="none" stroke="#D4CCC7" stroke-width="1">
+            <!-- Simplified vintage pointing hand -->
+            <path d="M0 30 L15 30 C20 30 25 25 28 20 L55 20 C60 20 62 18 62 15 C62 12 60 10 55 10 L38 10 C40 5 50 0 58 0 C68 0 72 5 72 12 L72 28 C72 38 65 42 55 42 L0 42Z" stroke-width="0.9"/>
+            <!-- Cuff -->
+            <path d="M0 28 L0 44 L-10 50 L-10 22 Z"/>
+            <!-- Engraving detail lines -->
+            <line x1="5" y1="33" x2="5" y2="40" stroke-width="0.3"/>
+            <line x1="10" y1="33" x2="10" y2="40" stroke-width="0.3"/>
+            <line x1="15" y1="33" x2="50" y2="33" stroke-width="0.3"/>
+            <line x1="15" y1="36" x2="48" y2="36" stroke-width="0.3"/>
+            <line x1="15" y1="39" x2="45" y2="39" stroke-width="0.3"/>
+            <line x1="40" y1="13" x2="55" y2="13" stroke-width="0.3"/>
+            <line x1="40" y1="16" x2="55" y2="16" stroke-width="0.3"/>
+          </g>
+
+          <!-- ── LAYER 8: Vintage owl silhouette (top right) ── -->
+          <g transform="translate(400 60)" opacity="0.15" fill="#D4CCC7">
+            <!-- Owl body -->
+            <ellipse cx="0" cy="28" rx="18" ry="26"/>
+            <!-- Head -->
+            <circle cx="0" cy="2" r="14"/>
+            <!-- Ear tufts -->
+            <path d="M-10 -8 L-14 -18 L-6 -10Z"/>
+            <path d="M10 -8 L14 -18 L6 -10Z"/>
+            <!-- Eyes -->
+            <circle cx="-5" cy="0" r="4" fill="#312A29"/>
+            <circle cx="5" cy="0" r="4" fill="#312A29"/>
+            <circle cx="-5" cy="0" r="2" fill="#F7CFA5" opacity="0.6"/>
+            <circle cx="5" cy="0" r="2" fill="#F7CFA5" opacity="0.6"/>
+            <!-- Beak -->
+            <path d="M-2 5 L0 9 L2 5Z" fill="#F7CFA5" opacity="0.4"/>
+            <!-- Feet/branch -->
+            <line x1="-8" y1="52" x2="8" y2="52" stroke="#6B5A4E" stroke-width="2" opacity="0.3"/>
+            <path d="M-5 50 L-5 52 M5 50 L5 52" fill="none" stroke="#D4CCC7" stroke-width="1"/>
+          </g>
+
+          <!-- ── LAYER 9: Golden connecting constellation lines ── -->
+          <g stroke="#F7CFA5" stroke-width="0.7" fill="none" opacity="0.35">
+            <line x1="265" y1="60" x2="370" y2="140"/>
+            <line x1="370" y1="140" x2="420" y2="85"/>
+            <line x1="370" y1="140" x2="400" y2="300"/>
+            <line x1="400" y1="300" x2="330" y2="390"/>
+            <line x1="265" y1="60" x2="160" y2="120"/>
+            <line x1="160" y1="120" x2="120" y2="240"/>
+            <line x1="120" y1="240" x2="160" y2="360"/>
+          </g>
+          <!-- Constellation nodes (apricot dots with glow) -->
+          <g fill="#F7CFA5">
+            <circle cx="265" cy="60" r="4.5" opacity="0.6"/>
+            <circle cx="265" cy="60" r="8" opacity="0.1"/>
+            <circle cx="370" cy="140" r="4" opacity="0.55"/>
+            <circle cx="370" cy="140" r="7" opacity="0.1"/>
+            <circle cx="420" cy="85" r="3.5" opacity="0.5"/>
+            <circle cx="400" cy="300" r="3.5" opacity="0.45"/>
+            <circle cx="400" cy="300" r="6.5" opacity="0.08"/>
+            <circle cx="330" cy="390" r="3" opacity="0.4"/>
+            <circle cx="160" cy="120" r="3.5" opacity="0.5"/>
+            <circle cx="120" cy="240" r="3" opacity="0.4"/>
+            <circle cx="160" cy="360" r="4" opacity="0.45"/>
+            <circle cx="160" cy="360" r="7" opacity="0.08"/>
+          </g>
+
+          <!-- ── LAYER 10: Scientific italic script labels ── -->
+          <text x="280" y="56" font-family="'Herr Von Muellerhoff', cursive" font-size="16" fill="#A1B8CA" opacity="0.4">b. attractor</text>
+          <text x="96" y="230" font-family="'Herr Von Muellerhoff', cursive" font-size="14" fill="#D4CCC7" opacity="0.3">a. heart</text>
+          <text x="410" y="310" font-family="'Herr Von Muellerhoff', cursive" font-size="14" fill="#F7CFA5" opacity="0.35">c. bridge</text>
+          <text x="340" y="405" font-family="'Herr Von Muellerhoff', cursive" font-size="13" fill="#A1B8CA" opacity="0.3">d. emergence</text>
+
+          <!-- ── LAYER 11: Fig. notation (scientific plate style) ── -->
+          <text x="145" y="375" font-family="'Herr Von Muellerhoff', cursive" font-size="18" fill="#D4CCC7" opacity="0.25">Fig. 17.</text>
+
+          <!-- ── LAYER 12: Small accent arctic circles ── -->
+          <circle cx="95" cy="150" r="6" fill="#A1B8CA" opacity="0.2"/>
+          <circle cx="440" cy="230" r="4.5" fill="#B6DDED" opacity="0.15"/>
+          <circle cx="180" cy="440" r="5" fill="#C6E1D9" opacity="0.18"/>
+
+          <!-- ── LAYER 13: Vintage botanical flower (tulip silhouette, top) ── -->
+          <g transform="translate(440 35) scale(0.7)" opacity="0.2" fill="none" stroke="#D4CCC7" stroke-width="0.8">
+            <!-- Tulip petals -->
+            <path d="M0 40 C-5 25 -15 5 -8 -15 C-4 -25 4 -25 8 -15 C15 5 5 25 0 40Z"/>
+            <path d="M-8 -15 C-14 -5 -20 5 -18 18 C-15 25 -5 30 0 40" stroke-width="0.5"/>
+            <path d="M8 -15 C14 -5 20 5 18 18 C15 25 5 30 0 40" stroke-width="0.5"/>
+            <!-- Stem -->
+            <line x1="0" y1="40" x2="-2" y2="80"/>
+            <!-- Leaf -->
+            <path d="M-2 55 C-15 50 -22 40 -18 35 C-14 30 -5 40 -2 55Z"/>
+          </g>
+
+          <!-- ── LAYER 14: Dotted arcs (scientific diagram feel) ── -->
+          <path d="M140 100 A 160 160 0 0 1 380 100" fill="none" stroke="#A1B8CA" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.15"/>
+          <path d="M100 300 A 200 200 0 0 0 420 300" fill="none" stroke="#F7CFA5" stroke-width="0.5" stroke-dasharray="3 5" opacity="0.12"/>
+
+          <!-- ── LAYER 15: Horizontal rule / vintage divider ── -->
+          <line x1="80" y1="430" x2="440" y2="430" stroke="#A59B93" stroke-width="0.4" opacity="0.15"/>
+
+          <!-- ── LAYER 16: Anatomy/heart detail (lower left, engraving style) ── -->
+          <g transform="translate(80 260) scale(0.55)" opacity="0.12" fill="none" stroke="#D4CCC7" stroke-width="0.8">
+            <!-- Simplified anatomical heart outline -->
+            <path d="M40 80 C40 80 0 50 0 25 C0 5 15 -5 30 5 C35 8 38 14 40 20 C42 14 45 8 50 5 C65 -5 80 5 80 25 C80 50 40 80 40 80Z"/>
+            <!-- Aorta -->
+            <path d="M30 5 C25 -8 30 -20 40 -22 C50 -20 55 -8 50 5"/>
+            <!-- Vessels -->
+            <path d="M25 -10 C20 -18 15 -25 10 -28" stroke-width="0.5"/>
+            <path d="M55 -10 C60 -18 65 -22 70 -24" stroke-width="0.5"/>
+            <!-- Cross-hatch detail -->
+            <line x1="15" y1="30" x2="25" y2="20" stroke-width="0.3"/>
+            <line x1="18" y1="35" x2="28" y2="25" stroke-width="0.3"/>
+            <line x1="55" y1="30" x2="65" y2="20" stroke-width="0.3"/>
+            <line x1="58" y1="35" x2="68" y2="25" stroke-width="0.3"/>
+          </g>
+
+          <!-- ── LAYER 17: Small butterflies (echoing brand, scattered) ── -->
+          <g transform="translate(90 80) scale(0.3)" opacity="0.2" fill="none" stroke="#A1B8CA" stroke-width="1.2">
+            <path d="M-5 2 C-18 -22 -50 -55 -60 -42 C-68 -32 -55 -8 -40 3 C-30 10 -15 12 -5 2Z"/>
+            <path d="M5 2 C18 -22 50 -55 60 -42 C68 -32 55 -8 40 3 C30 10 15 12 5 2Z"/>
+          </g>
+          <g transform="translate(430 380) scale(0.22) rotate(15)" opacity="0.15" fill="none" stroke="#F7CFA5" stroke-width="1.2">
+            <path d="M-5 2 C-18 -22 -50 -55 -60 -42 C-68 -32 -55 -8 -40 3 C-30 10 -15 12 -5 2Z"/>
+            <path d="M5 2 C18 -22 50 -55 60 -42 C68 -32 55 -8 40 3 C30 10 15 12 5 2Z"/>
+          </g>
+
+          <!-- ── LAYER 18: TM mark near main butterfly ── -->
+          <text x="380" y="178" font-family="'Quicksand', sans-serif" font-size="8" fill="#A1B8CA" opacity="0.25" font-weight="600">TM</text>
+        </svg>
+      </div>
+      <div class="bot">
+        <svg class="logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="33 95 330 84" style="height:22px; width:auto;"><defs><style>.cls-1{fill:#fff;}.cls-2{fill:#f7cfa5;}</style></defs><path class="cls-1" d="M109,146.41h4.22c.18,4.94,3.8,7.79,10,7.79s10-3,10-7.79c0-5.11-4.94-6-10.23-6.77-6.3-.89-13.07-2.08-13.07-10.34,0-6.9,5.35-11.59,13.37-11.59,7.85,0,13.08,4.46,13.31,11.23h-4.1c-.23-4.46-3.62-7.31-9.21-7.31s-9.21,3-9.21,7.55c0,5,4.87,5.82,10.16,6.66,6.3,1,13.14,2.14,13.14,10.46,0,7.25-5.59,11.82-14.15,11.82S109.15,153.67,109,146.41Z"/><path class="cls-1" d="M142.31,161.21h4c1.55,4,5.17,5.95,10,5.95,6.3,0,10.7-3.09,10.7-10.76v-4.93c-2.08,4.22-6,6.47-11.11,6.47-7.85,0-13.91-4.75-13.91-14.79V128h4v15.16c0,7.25,4.16,11.11,10.52,11.11S167,150.34,167,143.15V128h4v28.29c0,10.22-6.47,14.38-14.68,14.38C149.68,170.66,144.15,167.57,142.31,161.21Z"/><path class="cls-1" d="M175.71,142c0-9.75,5.82-14.8,14.5-14.8s14.5,5.05,14.5,14.8v15.33h-4V142c0-7.25-4.16-11.12-10.52-11.12s-10.52,3.87-10.52,11.12v15.33h-4Z"/><path class="cls-1" d="M209.35,142.85c0-9.15,6.54-15.63,15.81-15.63s15.75,6.36,15.75,15.63v14.5h-3.69V150.1c-2.08,5.23-6.95,8-12.66,8C216.3,158.12,209.35,152.24,209.35,142.85Zm27.57-.18c0-6.77-4.75-11.77-11.76-11.77s-11.77,5-11.77,11.77,4.75,11.77,11.77,11.77S236.92,149.45,236.92,142.67Z"/><path class="cls-1" d="M245.54,142.85c0-9.45,6.6-15.63,15.69-15.63,9.33,0,15.87,6.54,15.87,15.57s-6.6,15.33-15.21,15.33c-5.59,0-10.17-2.61-12.37-7.07v18.84h-4Zm27.52-.18c0-6.77-4.76-11.77-11.77-11.77s-11.77,5-11.77,11.77,4.7,11.77,11.77,11.77S273.06,149.45,273.06,142.67Z"/><path class="cls-1" d="M281.74,146.53V117.59h4V128H303v3.63H285.72v14.91c0,5.35,3,7.91,7.55,7.91s7.54-2.5,7.54-7.91v-.65h3.87v.65c0,7.73-4.64,11.59-11.41,11.59S281.74,154.26,281.74,146.53Z"/><path class="cls-1" d="M309.37,128h4v29.36h-4Z"/><path class="cls-1" d="M345.57,169.89V151.05c-2.2,4.46-6.78,7.07-12.37,7.07-8.61,0-15.21-6.3-15.21-15.33s6.54-15.57,15.87-15.57c9.09,0,15.69,6.18,15.69,15.63v27Zm0-27.22c0-6.77-4.7-11.77-11.77-11.77S322,135.9,322,142.67s4.76,11.77,11.77,11.77S345.57,149.45,345.57,142.67Z"/><path class="cls-2" d="M82.39,150.92s5.22-2.5,9.19-9.69c6.39-11.56,3.83-31.1-9.19-38.4-13.94-7.82-23.83,4.61-23.83,4.61s3.62-.57,10.82,3.13c13.74,7.05,18.87,22.19,16.65,33.2A17.93,17.93,0,0,1,82.39,150.92Z"/><path class="cls-2" d="M73.66,153.9a19.13,19.13,0,0,1-8-1.75,22.4,22.4,0,0,1-11.78-13A35,35,0,0,1,55,113.52a41.84,41.84,0,0,1,3.54-6.1l1.47,1a40.68,40.68,0,0,0-3.4,5.84c-2.78,6-4.2,15.81-1.08,24.25a20.64,20.64,0,0,0,10.85,12,18.3,18.3,0,0,0,16.06-.65l.93,1.52A20.17,20.17,0,0,1,73.66,153.9Z"/><path class="cls-2" d="M83.73,151l-1.6-.66a2.64,2.64,0,0,0,.1-.3,2.55,2.55,0,0,1,.11-.33,10.72,10.72,0,0,0,.18-7.71c-1.4-3.64-5-6.22-10-7.28a31,31,0,0,0-17.16,1.84,34.64,34.64,0,0,0-7.95,4.28c-.2.14-.38.28-.57.43L46,142l-1.1-1.34c.29-.23.57-.46.87-.68l.6-.45a36.35,36.35,0,0,1,8.35-4.5,32.62,32.62,0,0,1,18.13-1.91c5.64,1.18,9.64,4.14,11.25,8.34a12.34,12.34,0,0,1-.17,8.94c0,.07,0,.15-.07.24A4.72,4.72,0,0,1,83.73,151Z"/><path class="cls-2" d="M69.46,157.93c-7.84,0-16.35-4.19-22.46-11.82-.62-.77-1.21-1.57-1.75-2.38-.21-.32-.43-.64-.63-1l-.44-.72,1.51-.89c.13.23.27.46.41.68s.4.62.6.93c.52.77,1.08,1.53,1.66,2.26,8.69,10.84,22.42,14.37,31.26,8,.23-.16.46-.34.69-.52l.59-.5,1.16,1.31c-.21.19-.43.38-.66.56s-.51.39-.76.57A18.93,18.93,0,0,1,69.46,157.93Z"/><path class="cls-2" d="M63.47,160.75a30,30,0,0,1-3.88-.26c-7.88-1-14.89-5.22-18.75-11.2-.27-.42-.52-.84-.76-1.28s-.32-.61-.47-.92l1.61-.77c.13.28.28.56.43.84s.45.78.69,1.16c3.57,5.54,10.11,9.43,17.49,10.4a25.24,25.24,0,0,0,16.74-3.38A16.43,16.43,0,0,0,80,129.22a25.29,25.29,0,0,0-15.3-7.6c-9.08-1.19-17.82,2.17-22.28,8.58-.12.18-.25.36-.36.55s-.33.53-.45.74l-1.46-1c.13-.22.26-.45.4-.66s.27-.41.41-.61c4.83-7,14.24-10.6,24-9.32A27,27,0,0,1,81.32,128a18.22,18.22,0,0,1-3.8,28.85A26.41,26.41,0,0,1,63.47,160.75Z"/><path class="cls-1" d="M59,109.19a20.63,20.63,0,0,1,8.78,2,29.2,29.2,0,0,1,16.1,18.22c2,6.65,1.58,13.25.29,16.56a28.11,28.11,0,0,1-3.11,6h0a1,1,0,0,0-.08.11c-1,1.42-9.85,13.88-28.15,13.88h-1.1c-4.12-.11-9.47-1.55-12.12-5.26-1.73-2.4-2-5.46-.89-9.09,1.36-4.35,6.2-8.7,6.25-8.74l1.13-1-.81-1.28a32.08,32.08,0,0,1-3.08-6.91c-1.11-3.55-2-8.75.18-13.35,3.26-7,9.47-11.15,16.61-11.15m0-1.78c-7.76,0-14.63,4.49-18.22,12.18-4.66,9.95,3,22,3,22s-5.24,4.65-6.77,9.54c-3.58,11.48,6.33,16.44,14.67,16.66h1.14c20.43,0,29.63-14.71,29.66-14.71h0a29.34,29.34,0,0,0,3.34-6.4c2.76-7.08,2.34-27.85-17.29-37A22.58,22.58,0,0,0,59,107.41Z"/><path class="cls-1" d="M76,166.76s-1.15-9.41,8.19-17.3c3.47-2.93,6.22-3.56,7.1-2.92s.08,1.89-.49,2.19C77.33,155.52,76,166.76,76,166.76Z"/><path class="cls-1" d="M351.71,154.42a3,3,0,1,1,3,2.93A2.86,2.86,0,0,1,351.71,154.42Zm5.46,0a2.46,2.46,0,1,0-2.46,2.42A2.34,2.34,0,0,0,357.17,154.42Zm-3.6-1.41H355a.91.91,0,0,1,1,.92.86.86,0,0,1-.7.9l.79,1h-.64l-.71-1h-.65v1h-.54Zm1.4,1.39a.47.47,0,1,0,0-.93h-.86v.93Z"/><path class="cls-1" d="M86.1,154.79h-1v-.46h2.45v.46h-1v2.56h-.5Zm2-.46h.78l1,2.32,1-2.32h.79v3h-.5V154.9l-1,2.45h-.49l-1-2.45v2.45h-.49Z"/></svg>
+        <div class="bot-right">
+          <div class="meta">Advisory Partnership &middot; 2026</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 2 — AIQ Framework ═══ -->
+    <div class="slide s2-aiq" data-slide="2">
+      <div class="top-bar"></div>
+      <div class="inner">
+        <div class="section-label">Where We Start</div>
+        <h1>The <em>AIQ</em> Framework</h1>
+
+        <div class="aiq-layout">
+          <div class="wheel-container">
+            <svg class="wheel-svg" viewBox="-80 -20 560 450" xmlns="http://www.w3.org/2000/svg">
+              <!-- Wheel segments -->
+              <path d="M 201.8 30.0 A 170 170 0 0 1 290.4 56.0 L 253.2 115.3 A 100 100 0 0 0 201.0 100.0 Z" fill="#3B5A6E"/>
+              <path d="M 293.4 58.0 A 170 170 0 0 1 353.9 127.8 L 290.5 157.5 A 100 100 0 0 0 254.9 116.4 Z" fill="#4A6B7A"/>
+              <path d="M 355.4 131.0 A 170 170 0 0 1 368.5 222.4 L 299.1 213.2 A 100 100 0 0 0 291.4 159.4 Z" fill="#A1B8CA" stroke="#F7CFA5" stroke-width="2.5"/>
+              <path d="M 368.0 226.0 A 170 170 0 0 1 329.6 310.0 L 276.3 264.7 A 100 100 0 0 0 298.8 215.3 Z" fill="#2D5A5A"/>
+              <path d="M 327.3 312.7 A 170 170 0 0 1 249.6 362.6 L 229.2 295.6 A 100 100 0 0 0 274.9 266.3 Z" fill="#5A7A8A"/>
+              <path d="M 246.2 363.6 A 170 170 0 0 1 153.8 363.6 L 172.8 296.2 A 100 100 0 0 0 227.2 296.2 Z" fill="#8FAAB8"/>
+              <path d="M 150.4 362.6 A 170 170 0 0 1 72.7 312.7 L 125.1 266.3 A 100 100 0 0 0 170.8 295.6 Z" fill="#A8BFC8"/>
+              <path d="M 70.4 310.0 A 170 170 0 0 1 32.0 226.0 L 101.2 215.3 A 100 100 0 0 0 123.7 264.7 Z" fill="#7A9AA8"/>
+              <path d="M 31.5 222.4 A 170 170 0 0 1 44.6 131.0 L 108.6 159.4 A 100 100 0 0 0 100.9 213.2 Z" fill="#4A7A8A"/>
+              <path d="M 46.1 127.8 A 170 170 0 0 1 106.6 58.0 L 145.1 116.4 A 100 100 0 0 0 109.5 157.5 Z" fill="#3A6878"/>
+              <path d="M 109.6 56.0 A 170 170 0 0 1 198.2 30.0 L 199.0 100.0 A 100 100 0 0 0 146.8 115.3 Z" fill="#2A4858"/>
+
+              <!-- Center circle -->
+              <circle cx="200" cy="200" r="90" fill="#312A29" stroke="rgba(255,255,255,0.15)" stroke-width="3"/>
+              <!-- AIQ logo in center -->
+              <g transform="translate(-95, 5) scale(0.42)">
+                <path style="stroke:none;fill-rule:nonzero;fill:rgb(100%,100%,100%);fill-opacity:1;" d="M 595.5625 466.25 L 622.617188 466.25 L 609.46875 438.113281 Z M 651.722656 473.589844 C 659.175781 489.09375 662.726562 495.246094 671.25 495.246094 L 671.25 496.191406 L 622.960938 496.191406 L 622.960938 495.246094 C 634.207031 495.246094 631.957031 486.25 626.160156 473.824219 L 623.171875 467.433594 L 594.988281 467.433594 C 586.367188 485.484375 589.429688 495.242188 602.371094 495.242188 L 602.371094 496.191406 L 568.996094 496.191406 L 568.996094 495.242188 C 577.636719 495.242188 584.972656 485.183594 594.203125 466.484375 L 621.542969 410.980469 Z"/><path style="stroke:none;fill-rule:nonzero;fill:rgb(100%,100%,100%);fill-opacity:1;" d="M 672.664062 496.191406 L 672.664062 495.246094 C 684.5 495.246094 684.5 488.734375 684.5 474.886719 L 684.5 434.652344 C 684.5 420.332031 684.5 414.296875 672.664062 414.296875 L 672.664062 413.347656 L 720.714844 413.347656 L 720.714844 414.296875 C 708.878906 414.296875 708.878906 420.332031 708.878906 434.652344 L 708.878906 474.886719 C 708.878906 488.734375 708.878906 495.246094 720.714844 495.246094 L 720.714844 496.191406 Z"/><path style="stroke:none;fill-rule:nonzero;fill:rgb(100%,100%,100%);fill-opacity:1;" d="M 767.929688 496.191406 C 784.855469 496.191406 786.035156 472.519531 786.035156 454.769531 C 786.035156 437.015625 784.855469 413.347656 767.929688 413.347656 C 751.007812 413.347656 749.824219 437.015625 749.824219 454.769531 C 749.824219 472.519531 751.007812 496.191406 767.929688 496.191406 M 822.960938 501.871094 C 820.359375 508.5 813.847656 523.882812 800.59375 523.882812 C 787.21875 523.882812 777.871094 514.179688 763.90625 514.179688 C 760.117188 514.179688 757.160156 516.074219 754.792969 520.570312 L 753.964844 520.09375 L 767.367188 497.132812 C 742.773438 496.90625 722.839844 481.550781 722.839844 454.769531 C 722.839844 427.789062 743.078125 412.402344 767.933594 412.402344 C 792.785156 412.402344 813.023438 427.789062 813.023438 454.769531 C 813.023438 481.570312 793.058594 496.929688 768.4375 497.136719 L 757.753906 515.480469 L 757.871094 515.480469 C 766.75 501.871094 776.574219 498.4375 783.082031 498.4375 C 792.785156 498.4375 806.394531 506.488281 814.207031 506.488281 C 818.585938 506.488281 820.714844 504.832031 822.371094 501.753906 Z"/><path style="stroke:none;fill-rule:nonzero;fill:rgb(100%,100%,100%);fill-opacity:1;" d="M 819.546875 414.785156 L 814.726562 414.785156 L 814.726562 413.386719 L 825.949219 413.386719 L 825.949219 414.785156 L 821.148438 414.785156 L 821.148438 426.347656 L 819.546875 426.347656 Z"/><path style="stroke:none;fill-rule:nonzero;fill:rgb(100%,100%,100%);fill-opacity:1;" d="M 827.925781 413.386719 L 829.347656 413.386719 L 832.503906 417.785156 C 833.1875 418.746094 834.609375 420.789062 834.609375 420.789062 C 834.609375 420.789062 836.027344 418.765625 836.707031 417.808594 L 839.867188 413.386719 L 841.289062 413.386719 L 841.289062 426.347656 L 839.6875 426.347656 L 839.6875 416.085938 C 839.6875 416.085938 839.347656 416.707031 838.730469 417.566406 L 834.609375 423.367188 L 830.46875 417.527344 C 829.886719 416.707031 829.527344 416.085938 829.527344 416.085938 L 829.527344 426.347656 L 827.925781 426.347656 Z"/>
+              </g>
+
+              <!-- Labels -->
+              <text x="254.9" y="12.9" text-anchor="start" fill="#A59B93" font-size="11" font-weight="400" font-family="Inter,sans-serif"><tspan x="254.9" dy="0">Strategy &amp;</tspan><tspan x="254.9" dy="13">Leadership</tspan></text>
+              <text x="347.4" y="72.3" text-anchor="start" fill="#A59B93" font-size="11" font-weight="400" font-family="Inter,sans-serif"><tspan x="347.4" dy="0">People &amp;</tspan><tspan x="347.4" dy="13">Culture</tspan></text>
+              <text x="400.0" y="172.2" text-anchor="start" fill="#F7CFA5" font-size="11" font-weight="700" font-family="Inter,sans-serif"><tspan x="400.0" dy="0">Architecture &amp;</tspan><tspan x="400.0" dy="13">Governance</tspan></text>
+              <text x="385.4" y="283.0" text-anchor="start" fill="#A59B93" font-size="11" font-weight="400" font-family="Inter,sans-serif"><tspan x="385.4" dy="0">Product</tspan><tspan x="385.4" dy="13">Management</tspan></text>
+              <text x="305.4" y="366.0" text-anchor="start" fill="#A59B93" font-size="11" font-weight="400" font-family="Inter,sans-serif">UX &amp; Ethics</text>
+              <text x="200.0" y="397.0" text-anchor="middle" fill="#A59B93" font-size="11" font-weight="400" font-family="Inter,sans-serif"><tspan x="200.0" dy="0">Data</tspan><tspan x="200.0" dy="13">Sourcing</tspan></text>
+              <text x="94.6" y="366.0" text-anchor="end" fill="#A59B93" font-size="11" font-weight="400" font-family="Inter,sans-serif"><tspan x="94.6" dy="0">Data</tspan><tspan x="94.6" dy="13">Operations</tspan></text>
+              <text x="22.6" y="283.0" text-anchor="end" fill="#A59B93" font-size="11" font-weight="400" font-family="Inter,sans-serif">Analytics</text>
+              <text x="-5.0" y="172.2" text-anchor="end" fill="#A59B93" font-size="11" font-weight="400" font-family="Inter,sans-serif">Using AI</text>
+              <text x="40.6" y="72.3" text-anchor="end" fill="#A59B93" font-size="11" font-weight="400" font-family="Inter,sans-serif">Building AI</text>
+              <text x="133.1" y="12.9" text-anchor="end" fill="#A59B93" font-size="11" font-weight="400" font-family="Inter,sans-serif"><tspan x="133.1" dy="0">Customizing</tspan><tspan x="133.1" dy="13">AI</tspan></text>
+            </svg>
+          </div>
+
+          <div class="right-content">
+            <p>Over the past decade we've identified <strong>eleven capabilities</strong> that separate world-class data and AI organizations from everyone else. How well a company performs across these areas is what we call its AIQ.</p>
+            <p>Most organizations invest heavily in the technical side (tooling, pipelines, models) and underinvest in the human side (organization design, culture, process). The companies that get real value from their data close that gap.</p>
+
+            <div class="gov-callout">
+              <h3>Architecture &amp; Governance: Where You Are Right Now</h3>
+              <p>This is the capability that determines whether data is trustworthy, well-owned, and decision-ready. For a new data governance leader, this is ground zero. Everything else in the wheel depends on getting this capability right first.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bot">
+          <div style="font-size:13px; color:#8A7F78;">Developed over ~10 years &middot; 100+ clients &middot; 250+ projects globally</div>
+          <div class="page-num-dark">02</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 3 — Sri's Situation ═══ -->
+    <div class="slide s2" data-slide="3">
+      <div class="top-bar"></div>
+      <div class="left-accent"></div>
+      <div class="inner">
+        <div class="section-label">Where You Are Today</div>
+        <h1>You Have the Mandate.<br>Now Let's <em>Build</em> the Foundation.</h1>
+
+        <div class="cards">
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
+            <h2>The Team Comes First</h2>
+            <p>The charter and vision are there. But none of it moves without the right people, particularly your first data stewards. Who you hire (and how you scope those roles) will shape everything that follows.</p>
+            <div class="synaptiq-line">We can have draft JDs and a hiring framework in your hands within two weeks.</div>
+          </div>
+
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+            </div>
+            <h2>Show Results Early, or Risk Losing Momentum</h2>
+            <p>Strategy decks don't buy credibility. Outcomes do. The programs that survive past year one are the ones that can point to something concrete in the first few months. Not perfection, just proof it's working.</p>
+            <div class="synaptiq-line">We'll help pick the right first wins: high visibility, achievable, tied to real outcomes.</div>
+          </div>
+
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </div>
+            <h2>This Is a People Problem Wrapped in a Data Problem</h2>
+            <p>IT has the architecture. What's missing is the people side: how teams work with data, who owns what, how decisions actually get made. Getting that right is change management, not just governance.</p>
+            <div class="synaptiq-line">We've run this playbook before. Org adoption is baked in, not bolted on.</div>
+          </div>
+        </div>
+
+        <div class="bot">
+          <div class="callout">Every governance program we've seen fail had the same thing in common: great strategy, no muscle to sustain it.</div>
+          <div class="page-num">03</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 4 — Playbook + OCM ═══ -->
+    <div class="slide s3" data-slide="4">
+      <div class="top-bar"></div>
+      <div class="glow"></div>
+      <div class="inner">
+        <div class="section-label">Our Playbook</div>
+        <div class="header-row">
+          <h1><em>The Playbook:</em> What Actually<br>Works (and What Doesn't)</h1>
+          <div class="credential">
+            <p>We've worked with leaders stepping into this exact situation: new role, blank slate, high expectations. Here's the model we keep coming back to.</p>
+          </div>
+        </div>
+
+        <div class="layers">
+          <div class="layer layer-1">
+            <div class="layer-num">1</div>
+            <h2>Data Products</h2>
+            <div class="sub">Team &amp; Ownership</div>
+            <p>Treat key datasets like products. Someone owns them, someone is accountable, and there's a model for keeping them healthy.</p>
+            <div class="for-sri">Right now: Who are your first stewards? What do they own? We'll help scope it.</div>
+          </div>
+          <div class="layer layer-2">
+            <div class="layer-num">2</div>
+            <h2>Data Reliability</h2>
+            <div class="sub">Early Wins</div>
+            <p>Catch problems before they hit a decision. This is the layer that makes governance tangible. People can actually see it working.</p>
+            <div class="for-sri">Right now: Pick one pain point everyone feels, fix it visibly, build from there.</div>
+          </div>
+          <div class="layer layer-3">
+            <div class="layer-num">3</div>
+            <h2>Decision Traceability</h2>
+            <div class="sub">Executive Confidence</div>
+            <p>Can you trace a business decision back to the data behind it? This is what makes governance credible to the C-suite.</p>
+            <div class="for-sri">Right now: Build the ROI narrative. Connect governance work to outcomes leadership cares about.</div>
+          </div>
+          <div class="layer layer-4">
+            <div class="layer-num">4</div>
+            <h2>Control Plane</h2>
+            <div class="sub">Longer Term</div>
+            <p>The technical layer that ties it all together: metadata, policy, monitoring across whatever platforms you're running.</p>
+            <div class="for-sri">Not yet. Get the people and process right first. This comes once the foundation is solid.</div>
+          </div>
+        </div>
+
+        <!-- OCM Banner -->
+        <div class="ocm-banner">
+          <div class="ocm-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+          </div>
+          <div class="ocm-text">
+            <h3>Running Through All of It: <em>Org Change Management</em></h3>
+            <p>None of this works if the organization doesn't come along. Adoption, alignment, new habits. It's woven into every step, not a separate workstream.</p>
+          </div>
+        </div>
+
+        <div class="bot">
+          <div class="differentiator" style="font-size:13px; color:#8A7F78; display:flex; align-items:center; gap:8px;"><svg style="height:18px; width:auto;" xmlns="http://www.w3.org/2000/svg" viewBox="564 406 282 123"><path style="stroke:none;fill-rule:nonzero;fill:#A59B93;fill-opacity:1;" d="M 595.5625 466.25 L 622.617188 466.25 L 609.46875 438.113281 Z M 651.722656 473.589844 C 659.175781 489.09375 662.726562 495.246094 671.25 495.246094 L 671.25 496.191406 L 622.960938 496.191406 L 622.960938 495.246094 C 634.207031 495.246094 631.957031 486.25 626.160156 473.824219 L 623.171875 467.433594 L 594.988281 467.433594 C 586.367188 485.484375 589.429688 495.242188 602.371094 495.242188 L 602.371094 496.191406 L 568.996094 496.191406 L 568.996094 495.242188 C 577.636719 495.242188 584.972656 485.183594 594.203125 466.484375 L 621.542969 410.980469 Z"/><path style="stroke:none;fill-rule:nonzero;fill:#A59B93;fill-opacity:1;" d="M 672.664062 496.191406 L 672.664062 495.246094 C 684.5 495.246094 684.5 488.734375 684.5 474.886719 L 684.5 434.652344 C 684.5 420.332031 684.5 414.296875 672.664062 414.296875 L 672.664062 413.347656 L 720.714844 413.347656 L 720.714844 414.296875 C 708.878906 414.296875 708.878906 420.332031 708.878906 434.652344 L 708.878906 474.886719 C 708.878906 488.734375 708.878906 495.246094 720.714844 495.246094 L 720.714844 496.191406 Z"/><path style="stroke:none;fill-rule:nonzero;fill:#A59B93;fill-opacity:1;" d="M 767.929688 496.191406 C 784.855469 496.191406 786.035156 472.519531 786.035156 454.769531 C 786.035156 437.015625 784.855469 413.347656 767.929688 413.347656 C 751.007812 413.347656 749.824219 437.015625 749.824219 454.769531 C 749.824219 472.519531 751.007812 496.191406 767.929688 496.191406 M 822.960938 501.871094 C 820.359375 508.5 813.847656 523.882812 800.59375 523.882812 C 787.21875 523.882812 777.871094 514.179688 763.90625 514.179688 C 760.117188 514.179688 757.160156 516.074219 754.792969 520.570312 L 753.964844 520.09375 L 767.367188 497.132812 C 742.773438 496.90625 722.839844 481.550781 722.839844 454.769531 C 722.839844 427.789062 743.078125 412.402344 767.933594 412.402344 C 792.785156 412.402344 813.023438 427.789062 813.023438 454.769531 C 813.023438 481.570312 793.058594 496.929688 768.4375 497.136719 L 757.753906 515.480469 L 757.871094 515.480469 C 766.75 501.871094 776.574219 498.4375 783.082031 498.4375 C 792.785156 498.4375 806.394531 506.488281 814.207031 506.488281 C 818.585938 506.488281 820.714844 504.832031 822.371094 501.753906 Z"/><path style="stroke:none;fill-rule:nonzero;fill:#A59B93;fill-opacity:1;" d="M 819.546875 414.785156 L 814.726562 414.785156 L 814.726562 413.386719 L 825.949219 413.386719 L 825.949219 414.785156 L 821.148438 414.785156 L 821.148438 426.347656 L 819.546875 426.347656 Z"/><path style="stroke:none;fill-rule:nonzero;fill:#A59B93;fill-opacity:1;" d="M 827.925781 413.386719 L 829.347656 413.386719 L 832.503906 417.785156 C 833.1875 418.746094 834.609375 420.789062 834.609375 420.789062 C 834.609375 420.789062 836.027344 418.765625 836.707031 417.808594 L 839.867188 413.386719 L 841.289062 413.386719 L 841.289062 426.347656 L 839.6875 426.347656 L 839.6875 416.085938 C 839.6875 416.085938 839.347656 416.707031 838.730469 417.566406 L 834.609375 423.367188 L 830.46875 417.527344 C 829.886719 416.707031 829.527344 416.085938 829.527344 416.085938 L 829.527344 426.347656 L 827.925781 426.347656 Z"/></svg><span>Framework &middot; Developed over ~10 years &middot; 100+ clients &middot; 250+ projects globally</span></div>
+          <div class="page-num-dark">04</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 5 — Proof Points (reframed) ═══ -->
+    <div class="slide s4" data-slide="5">
+      <div class="top-bar"></div>
+      <div class="inner">
+        <div class="section-label">We've Done This Before</div>
+        <h1>Here's What We <em>Learned</em></h1>
+
+        <div class="cases">
+          <div class="case">
+            <div class="case-accent"></div>
+            <div class="case-inner">
+              <div class="case-header">
+                <h3>Staffing Org</h3>
+                <span class="tag">Built From Scratch</span>
+              </div>
+              <div class="divider"></div>
+              <div class="col">
+                <div class="label sit">Situation</div>
+                <p>No governance team, no ownership. Three systems (scheduling, billing, reporting) each had their own version of the numbers.</p>
+              </div>
+              <div class="divider"></div>
+              <div class="col outcome">
+                <div class="label out">Outcome</div>
+                <p>Clear owners for each data product. Fill rates improved, revenue became predictable, and the constant "whose number is right?" debates stopped.</p>
+              </div>
+              <div class="divider"></div>
+              <div class="col lesson">
+                <div class="label les">Key Lesson</div>
+                <p>Get ownership right first. Everything else builds on that.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="case">
+            <div class="case-accent"></div>
+            <div class="case-inner">
+              <div class="case-header">
+                <h3>Operations Org</h3>
+                <span class="tag">Needed Quick Wins</span>
+              </div>
+              <div class="divider"></div>
+              <div class="col">
+                <div class="label sit">Situation</div>
+                <p>Skeptical leadership, limited runway. The team was spending all its time fixing bad data after the fact. Rework on top of rework.</p>
+              </div>
+              <div class="divider"></div>
+              <div class="col outcome">
+                <div class="label out">Outcome</div>
+                <p>Shifted to catching errors at the point of entry. Service outcomes improved fast enough to secure continued funding and exec buy-in.</p>
+              </div>
+              <div class="divider"></div>
+              <div class="col lesson">
+                <div class="label les">Key Lesson</div>
+                <p>The first 90 days decide whether you get a year two.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="case">
+            <div class="case-accent"></div>
+            <div class="case-inner">
+              <div class="case-header">
+                <h3>Legal Org</h3>
+                <span class="tag">Teams Misaligned</span>
+              </div>
+              <div class="divider"></div>
+              <div class="col">
+                <div class="label sit">Situation</div>
+                <p>Three teams, three interpretations of the same data. Cases kept getting bounced between groups because nobody agreed on definitions.</p>
+              </div>
+              <div class="divider"></div>
+              <div class="col outcome">
+                <div class="label out">Outcome</div>
+                <p>One governed view, shared definitions. Processing time dropped, rework disappeared, and teams stopped blaming each other's data.</p>
+              </div>
+              <div class="divider"></div>
+              <div class="col lesson">
+                <div class="label les">Key Lesson</div>
+                <p>The hardest part is never the data. It's getting people to agree.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bot">
+          <div class="takeaway">Same pattern every time: get the right people in place, don't over-plan, and show something real in the first 90 days. That's it.</div>
+          <div class="page-num">05</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 6 — 90-Day Timeline ═══ -->
+    <div class="slide s5" data-slide="6">
+      <div class="top-bar"></div>
+      <div class="glow glow-1"></div>
+      <div class="glow glow-2"></div>
+      <div class="inner">
+        <div class="section-label">Working Together</div>
+        <h1>The First 90 Days: <em>How We'd Work Together</em></h1>
+
+        <div class="timeline-full">
+          <div class="phase">
+            <div class="phase-ind">
+              <div class="phase-dot">1</div>
+              <div class="phase-line"></div>
+            </div>
+            <div class="phase-content">
+              <div class="phase-weeks">Weeks 1–4</div>
+              <div class="phase-title">Get Oriented, Get Staffing Right</div>
+              <div class="phase-desc">Talk to stakeholders, understand what's there today, define the data steward roles and what to look for in candidates</div>
+              <div class="phase-quick-win">Week 2 deliverable: Draft JDs and a hiring framework you can act on immediately</div>
+            </div>
+          </div>
+          <div class="phase">
+            <div class="phase-ind">
+              <div class="phase-dot">2</div>
+              <div class="phase-line"></div>
+            </div>
+            <div class="phase-content">
+              <div class="phase-weeks">Weeks 5–8</div>
+              <div class="phase-title">Build the Roadmap</div>
+              <div class="phase-desc">What are comparable orgs doing? What's realistic here? We'll benchmark, build the strategic roadmap, and lay out the change management approach.</div>
+              <div class="phase-quick-win">This is where we answer: "How should I go about this?" With specifics, not theory.</div>
+            </div>
+          </div>
+          <div class="phase">
+            <div class="phase-ind">
+              <div class="phase-dot">3</div>
+            </div>
+            <div class="phase-content">
+              <div class="phase-weeks">Weeks 9–12</div>
+              <div class="phase-title">Ship Something Real</div>
+              <div class="phase-desc">Pick one high-visibility initiative and execute. Also: figure out what the longer-term engagement looks like beyond these 90 days.</div>
+              <div class="phase-quick-win">You walk into your next leadership meeting with proof it's working, not a promise that it will</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bot">
+          <div class="closing">Every phase builds on the last. By week 12, you have a team, a roadmap, and something to show for it.</div>
+          <div class="page-num-dark">06</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 7 — What You Get + CTA ═══ -->
+    <div class="slide s6" data-slide="7">
+      <div class="top-bar"></div>
+      <div class="glow glow-1"></div>
+      <div class="glow glow-2"></div>
+      <div class="inner">
+        <div class="section-label">The Partnership</div>
+        <h1>What You Get, <em>Who You Work With</em></h1>
+
+        <div class="s6-layout">
+          <div class="del-box">
+            <h3>Deliverables</h3>
+            <div class="del-item">
+              <div class="del-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2 6 5 9 10 3"/></svg></div>
+              <div class="del-text">Data steward JDs and hiring criteria</div>
+            </div>
+            <div class="del-item">
+              <div class="del-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2 6 5 9 10 3"/></svg></div>
+              <div class="del-text">Industry benchmarking (what comparable orgs are actually doing)</div>
+            </div>
+            <div class="del-item">
+              <div class="del-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2 6 5 9 10 3"/></svg></div>
+              <div class="del-text">A roadmap you'd actually follow: phased, realistic, tied to outcomes</div>
+            </div>
+            <div class="del-item">
+              <div class="del-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2 6 5 9 10 3"/></svg></div>
+              <div class="del-text">Change management approach, including how to bring the org along</div>
+            </div>
+            <div class="del-item">
+              <div class="del-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2 6 5 9 10 3"/></svg></div>
+              <div class="del-text">Tech recommendations that work with what you already have</div>
+            </div>
+            <div class="del-item">
+              <div class="del-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2 6 5 9 10 3"/></svg></div>
+              <div class="del-text">A clear picture of what comes next and how we'd keep working together</div>
+            </div>
+          </div>
+
+          <div class="s6-right">
+            <div class="team-box">
+              <h3>Your Advisory Team</h3>
+              <div class="team-roles">
+                <div class="team-role">
+                  <div class="role-icon">&#9678;</div>
+                  <div class="role-name">Data Strategy Lead</div>
+                </div>
+                <div class="team-role">
+                  <div class="role-icon">&#9670;</div>
+                  <div class="role-name">Data Architect</div>
+                </div>
+                <div class="team-role">
+                  <div class="role-icon">&#9733;</div>
+                  <div class="role-name">Change Manager</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cta-box">
+              <div class="cta-text">Let's Talk Through This<br>Next Week</div>
+              <div class="cta-sub">We'll walk through the thinking, hear what resonates, and figure out where to start</div>
+              <div class="cta-email">stephen.sklarew@synaptiq.ai</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bot">
+          <div class="closing">We work alongside you until you're ready to run it. That's the whole idea.</div>
+          <div class="page-num-dark">07</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 8 — Appendix Divider ═══ -->
+    <div class="slide s-app" data-slide="8">
+      <div class="top-bar"></div>
+      <div class="glow"></div>
+      <div class="inner">
+        <h1>Appendix</h1>
+        <div class="divider-line"></div>
+        <div class="sub">Supporting frameworks, processes, and metrics</div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 9 — Architecture & Governance Deep Dive ═══ -->
+    <div class="slide s-gov" data-slide="9">
+      <div class="top-bar"></div>
+      <div class="left-accent"></div>
+      <div class="inner">
+        <div class="section-label">AIQ Deep Dive</div>
+        <h1>Architecture &amp; Governance: <em>The Foundation Capability</em></h1>
+
+        <div class="gov-grid">
+          <div class="gov-pillar">
+            <h3>Fundamentals</h3>
+            <p>The policies, tools, and documents needed to manage and govern data in a modern, data-centric organization.</p>
+            <ul>
+              <li>Data governance charter and vision</li>
+              <li>Data classification and sensitivity standards</li>
+              <li>Metadata management practices</li>
+              <li>Data catalog and business glossary</li>
+              <li>Roles: data owners, stewards, custodians</li>
+            </ul>
+          </div>
+          <div class="gov-pillar">
+            <h3>Process</h3>
+            <p>Processes that define how data is stored, managed, collected, and secured across the enterprise.</p>
+            <ul>
+              <li>Data quality rules and validation</li>
+              <li>Data lifecycle management</li>
+              <li>Access control and security protocols</li>
+              <li>Change management for data assets</li>
+              <li>Incident response for data issues</li>
+            </ul>
+          </div>
+          <div class="gov-pillar">
+            <h3>Architecture</h3>
+            <p>How data flows through the organization to inform strategy for managing and governing data effectively.</p>
+            <ul>
+              <li>Enterprise data architecture blueprint</li>
+              <li>Data flow and lineage mapping</li>
+              <li>Integration patterns and standards</li>
+              <li>Technology stack alignment</li>
+              <li>Scalable storage and compute strategy</li>
+            </ul>
+          </div>
+          <div class="gov-pillar">
+            <h3>Communications</h3>
+            <p>A defined framework for documenting, communicating, and enforcing data governance across the organization.</p>
+            <ul>
+              <li>Governance council and meeting cadence</li>
+              <li>Stakeholder reporting and dashboards</li>
+              <li>Training and enablement programs</li>
+              <li>Policy distribution and acknowledgment</li>
+              <li>Cross-functional alignment rituals</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="maturity-bar">
+          <div class="mat-label">Maturity Stages</div>
+          <div class="maturity-stages">
+            <div class="mat-stage s-initial">Initial</div>
+            <div class="mat-stage s-managed">Managed</div>
+            <div class="mat-stage s-defined">Defined</div>
+            <div class="mat-stage s-measured">Measured</div>
+            <div class="mat-stage s-optimizing">Optimizing</div>
+          </div>
+        </div>
+
+        <div class="bot">
+          <div style="font-size:13px; color:#8A7F78;">Each sub-capability is assessed independently to identify targeted improvement areas</div>
+          <div class="page-num">09</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 10 — Discovery Workshops ═══ -->
+    <div class="slide s-disc" data-slide="10">
+      <div class="top-bar"></div>
+      <div class="glow"></div>
+      <div class="inner">
+        <div class="section-label">How We Engage</div>
+        <h1>Stakeholder Discovery: <em>How We Talk to Your Organization</em></h1>
+
+        <div class="disc-layout">
+          <div class="disc-col">
+            <div class="disc-card">
+              <h3><span class="num">1</span> Executive Alignment Sessions</h3>
+              <p>One-on-one or small group sessions with senior leaders to understand strategic priorities, pain points, and success criteria.</p>
+              <ul>
+                <li>C-suite and VP-level sponsors</li>
+                <li>60-minute structured interviews</li>
+                <li>Focus: vision, priorities, political landscape</li>
+              </ul>
+            </div>
+            <div class="disc-card">
+              <h3><span class="num">2</span> Department Workshops</h3>
+              <p>Collaborative sessions with each business unit to map data flows, pain points, and high-value use cases.</p>
+              <ul>
+                <li>Cross-functional teams of 6-10 people</li>
+                <li>90-minute facilitated workshops</li>
+                <li>Focus: current state, data products, friction points</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="disc-col">
+            <div class="disc-card">
+              <h3><span class="num">3</span> Technical Deep Dives</h3>
+              <p>Architecture and tooling reviews with data engineering, IT, and platform teams to assess infrastructure readiness.</p>
+              <ul>
+                <li>Data engineers, architects, IT ops</li>
+                <li>90-minute working sessions</li>
+                <li>Focus: tooling, pipelines, gaps, tech debt</li>
+              </ul>
+            </div>
+            <div class="disc-card">
+              <h3><span class="num">4</span> "Art of the Possible" Sessions</h3>
+              <p>Forward-looking workshops to generate and prioritize use cases that demonstrate governance value.</p>
+              <ul>
+                <li>Mixed business and technical attendees</li>
+                <li>2-hour creative brainstorming</li>
+                <li>Focus: quick wins, high-impact opportunities</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="disc-col" style="max-width: 280px;">
+            <div class="stakeholder-box" style="flex:1;">
+              <h3>Key Stakeholder Groups</h3>
+              <div class="stake-grid">
+                <div class="stake-tag">Executive Sponsors</div>
+                <div class="stake-tag">Data Governance Lead</div>
+                <div class="stake-tag">Business Unit Heads</div>
+                <div class="stake-tag">Data Engineers</div>
+                <div class="stake-tag">Data Stewards</div>
+                <div class="stake-tag">IT / Platform</div>
+                <div class="stake-tag">Compliance / Legal</div>
+                <div class="stake-tag">Analytics Teams</div>
+                <div class="stake-tag">End Users</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bot">
+          <div style="font-size:13px; color:#8A7F78;">Typically 10-15 sessions over weeks 1-3, tailored to your organization's structure</div>
+          <div class="page-num-dark">10</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 11 — Data Product Rubrics ═══ -->
+    <div class="slide s-rubric" data-slide="11">
+      <div class="top-bar"></div>
+      <div class="left-accent"></div>
+      <div class="inner">
+        <div class="section-label">Prioritization Framework</div>
+        <h1>Data Product Identification &amp; <em>Prioritization Rubric</em></h1>
+
+        <table class="rubric-table">
+          <thead>
+            <tr>
+              <th style="width:24%;">Criterion</th>
+              <th style="width:10%;">Weight</th>
+              <th style="width:22%;">Low (1)</th>
+              <th style="width:22%;">Medium (2)</th>
+              <th style="width:22%;">High (3)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="criterion">Business Impact</td>
+              <td><span class="score s3">30%</span></td>
+              <td>Supports a single team's workflow</td>
+              <td>Affects multiple teams or a key business process</td>
+              <td>Directly tied to revenue, compliance, or strategic initiative</td>
+            </tr>
+            <tr>
+              <td class="criterion">Data Quality Pain</td>
+              <td><span class="score s2">20%</span></td>
+              <td>Occasional inconsistencies, workarounds exist</td>
+              <td>Regular rework required, trust issues emerging</td>
+              <td>Decisions delayed or wrong due to data quality</td>
+            </tr>
+            <tr>
+              <td class="criterion">Stakeholder Readiness</td>
+              <td><span class="score s2">20%</span></td>
+              <td>No clear owner, low engagement</td>
+              <td>Willing owner, some organizational support</td>
+              <td>Executive sponsor, active steward, team aligned</td>
+            </tr>
+            <tr>
+              <td class="criterion">Feasibility</td>
+              <td><span class="score s1">15%</span></td>
+              <td>Major infrastructure or process changes needed</td>
+              <td>Moderate effort, existing tools partially support</td>
+              <td>Can be done with current tools and team</td>
+            </tr>
+            <tr>
+              <td class="criterion">Visibility / Quick Win</td>
+              <td><span class="score s1">15%</span></td>
+              <td>Results hard to demonstrate to leadership</td>
+              <td>Tangible improvement within a quarter</td>
+              <td>High-profile win within 30-60 days</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="rubric-note">
+          <strong>How to use:</strong> Score each candidate data product 1-3 on each criterion, multiply by weight, and sum for a prioritized backlog. Products scoring 2.5+ are strong first-wave candidates. Re-score quarterly as context evolves.
+        </div>
+
+        <div class="bot">
+          <div style="font-size:13px; color:#8A7F78;">Adapted from AIQ capability assessment methodology</div>
+          <div class="page-num">11</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 12 — Governance Metrics ═══ -->
+    <div class="slide s-metrics" data-slide="12">
+      <div class="top-bar"></div>
+      <div class="glow glow-1"></div>
+      <div class="glow glow-2"></div>
+      <div class="inner">
+        <div class="section-label">Measuring Success</div>
+        <h1>Data Governance <em>Balanced Scorecard</em></h1>
+
+        <div class="bsc-grid">
+          <div class="bsc-quad">
+            <h3><span class="q-icon">&#9670;</span> Data Quality &amp; Trust</h3>
+            <ul>
+              <li>Data quality score (completeness, accuracy, timeliness)</li>
+              <li>Number of critical data issues reported vs. resolved</li>
+              <li>Percentage of key datasets with defined quality rules</li>
+              <li>Data consumer trust survey scores</li>
+              <li>Reduction in rework caused by data errors</li>
+            </ul>
+          </div>
+          <div class="bsc-quad">
+            <h3><span class="q-icon">&#9678;</span> Adoption &amp; Engagement</h3>
+            <ul>
+              <li>Percentage of data products with assigned stewards</li>
+              <li>Active users of data catalog / glossary</li>
+              <li>Number of departments participating in governance</li>
+              <li>Training completion rates across roles</li>
+              <li>Governance council meeting attendance and action closure</li>
+            </ul>
+          </div>
+          <div class="bsc-quad">
+            <h3><span class="q-icon">&#9733;</span> Operational Efficiency</h3>
+            <ul>
+              <li>Time to resolve data access requests</li>
+              <li>Reduction in duplicated datasets and reports</li>
+              <li>Percentage of data pipelines with lineage documented</li>
+              <li>Mean time to detect and fix data incidents</li>
+              <li>Reduction in manual data preparation hours</li>
+            </ul>
+          </div>
+          <div class="bsc-quad">
+            <h3><span class="q-icon">&#9656;</span> Business Value &amp; Compliance</h3>
+            <ul>
+              <li>Revenue or cost impact of governed data products</li>
+              <li>Regulatory audit readiness score</li>
+              <li>Number of data-driven decisions enabled per quarter</li>
+              <li>Time to deliver new analytics or reports</li>
+              <li>Risk reduction: policy violations and breach exposure</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="bot">
+          <div style="font-size:13px; color:#8A7F78;">Establish baselines in Phase 1, set targets in Phase 2, report monthly from Phase 3 onward</div>
+          <div class="page-num-dark">12</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 13 — Topline KPI Roll-Up ═══ -->
+    <div class="slide s-rollup" data-slide="13">
+      <div class="top-bar"></div>
+      <div class="inner">
+        <div class="section-label">Executive Dashboard</div>
+        <h1>Topline KPIs: <em>Tied to Your Strategic Objectives</em></h1>
+
+        <div class="obj-banner">
+          <div class="obj-pill">
+            <div class="obj-icon">$</div>
+            <div class="obj-text">
+              <div class="obj-title">Revenue Growth &amp; Cost Optimization</div>
+              <div class="obj-detail">Drive top-line growth, reduce operational costs, and improve margins through data-driven efficiency</div>
+            </div>
+          </div>
+          <div class="obj-pill">
+            <div class="obj-icon">&#9650;</div>
+            <div class="obj-text">
+              <div class="obj-title">Operational Excellence &amp; Scale</div>
+              <div class="obj-detail">Accelerate delivery cycles, streamline cross-functional workflows, and scale core operations</div>
+            </div>
+          </div>
+          <div class="obj-pill">
+            <div class="obj-icon">&#9632;</div>
+            <div class="obj-text">
+              <div class="obj-title">Risk Mitigation &amp; Compliance</div>
+              <div class="obj-detail">Strengthen regulatory readiness, reduce audit exposure, and embed quality into every process</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rollup-grid">
+          <div class="rollup-card">
+            <div class="card-category">Data Quality &amp; Trust</div>
+            <div class="kpi-name">Composite Data Quality Index</div>
+            <div class="kpi-desc">A single weighted score blending completeness, accuracy, and timeliness across critical datasets. Tells leadership at a glance: can we trust our data?</div>
+            <div class="feeds-from"><strong>Feeds from:</strong> quality scores, issue resolution rates, quality rule coverage, trust surveys, rework reduction</div>
+            <div class="ties-to"><strong>Ties to:</strong> Risk Mitigation &amp; Compliance &mdash; directly supports regulatory readiness and production quality assurance</div>
+          </div>
+          <div class="rollup-card">
+            <div class="card-category">Adoption &amp; Engagement</div>
+            <div class="kpi-name">Governance Participation Rate</div>
+            <div class="kpi-desc">Percentage of business units with active stewards and regular council engagement. Answers the critical question: is governance actually taking hold?</div>
+            <div class="feeds-from"><strong>Feeds from:</strong> steward assignments, catalog usage, departmental participation, training completion, council attendance</div>
+            <div class="ties-to"><strong>Ties to:</strong> All three &mdash; cross-functional adoption is the foundation for revenue, operational, and compliance outcomes</div>
+          </div>
+          <div class="rollup-card">
+            <div class="card-category">Operational Efficiency</div>
+            <div class="kpi-name">Mean Time to Data Delivery</div>
+            <div class="kpi-desc">Average time from data request to provisioned, quality-checked access. Proves governance is accelerating delivery, not slowing it down.</div>
+            <div class="feeds-from"><strong>Feeds from:</strong> access request resolution, duplication reduction, lineage coverage, incident response, manual prep hours</div>
+            <div class="ties-to"><strong>Ties to:</strong> Operational Excellence &amp; Scale &mdash; faster data access accelerates delivery cycles and removes cross-functional bottlenecks</div>
+          </div>
+          <div class="rollup-card">
+            <div class="card-category">Business Value &amp; Compliance</div>
+            <div class="kpi-name">Data-Driven Decision Rate</div>
+            <div class="kpi-desc">Percentage of key business decisions backed by governed data products, paired with audit readiness. Ties governance directly to outcomes leadership cares about.</div>
+            <div class="feeds-from"><strong>Feeds from:</strong> revenue/cost impact, audit readiness, decisions enabled, analytics delivery time, risk reduction</div>
+            <div class="ties-to"><strong>Ties to:</strong> Revenue Growth &amp; Cost Optimization &mdash; governed data products drive the cost visibility and decision intelligence needed for margin improvement</div>
+          </div>
+        </div>
+
+        <div class="bot">
+          <div style="font-size:13px; color:#8A7F78;">Governance KPIs mapped to your organization's strategic priorities</div>
+          <div class="page-num">13</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Navigation -->
+<div class="nav-bar">
+  <button class="nav-btn" id="prevBtn" onclick="navigate(-1)">&larr; Prev</button>
+  <div class="nav-dots" id="navDots"></div>
+  <div class="slide-indicator" id="slideIndicator">1 / 12</div>
+  <button class="nav-btn" id="nextBtn" onclick="navigate(1)">Next &rarr;</button>
+</div>
+<div class="kbd-hint"><kbd>&larr;</kbd> <kbd>&rarr;</kbd> arrow keys to navigate</div>
+
+<script>
+  const TOTAL = 13;
+  let current = 1;
+
+  const dotsContainer = document.getElementById('navDots');
+  for (let i = 1; i <= TOTAL; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'nav-dot' + (i === 1 ? ' active' : '');
+    dot.dataset.slide = i;
+    dot.addEventListener('click', () => goTo(i));
+    dotsContainer.appendChild(dot);
+  }
+
+  function goTo(n) {
+    if (n < 1 || n > TOTAL) return;
+    document.querySelector('.slide.active').classList.remove('active');
+    document.querySelector(`.slide[data-slide="${n}"]`).classList.add('active');
+    current = n;
+    updateUI();
+  }
+
+  function navigate(dir) { goTo(current + dir); }
+
+  function updateUI() {
+    document.getElementById('slideIndicator').textContent = current + ' / ' + TOTAL;
+    document.getElementById('prevBtn').classList.toggle('disabled', current === 1);
+    document.getElementById('nextBtn').classList.toggle('disabled', current === TOTAL);
+    document.querySelectorAll('.nav-dot').forEach(d => {
+      d.classList.toggle('active', +d.dataset.slide === current);
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); navigate(1); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); navigate(-1); }
+    if (e.key === 'Home') { e.preventDefault(); goTo(1); }
+    if (e.key === 'End') { e.preventDefault(); goTo(TOTAL); }
+  });
+
+  // Click to navigate — left third goes back, right two-thirds goes forward
+  document.getElementById('slideFrame').addEventListener('click', (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const thirdWidth = rect.width / 3;
+    if (clickX < thirdWidth) {
+      navigate(-1);
+    } else {
+      navigate(1);
+    }
+  });
+
+  function scaleToFit() {
+    const frame = document.getElementById('slideFrame');
+    const deck = document.getElementById('deck');
+    const scale = Math.min(deck.clientWidth / 1280, deck.clientHeight / 720, 1);
+    frame.style.transform = `scale(${scale})`;
+  }
+  window.addEventListener('resize', scaleToFit);
+  scaleToFit();
+  updateUI();
+</script>
+</body>
+</html>
