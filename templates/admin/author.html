@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% block title %}Create Deck - Showroom{% endblock %}
+
+{% block head %}
+<style>
+.author-form { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 24px; }
+.form-section { margin-bottom: 24px; }
+.form-section h3 { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 12px; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+.form-group select, .form-group input[type="text"], .form-group textarea {
+    width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px;
+    font-family: inherit; font-size: 14px; background: #fff;
+}
+.form-group textarea { min-height: 320px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.5; resize: vertical; }
+.form-group select:focus, .form-group input:focus, .form-group textarea:focus {
+    outline: none; border-color: #A1B8CA; box-shadow: 0 0 0 3px rgba(161,184,202,0.15);
+}
+.theme-preview { display: flex; gap: 8px; margin-top: 8px; }
+.theme-swatch { width: 32px; height: 32px; border-radius: 6px; border: 2px solid #eee; }
+.collage-options { margin-top: 12px; }
+.collage-options label { display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 8px; font-weight: 400; }
+.collage-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; max-height: 200px; overflow-y: auto; }
+.collage-thumb { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 6px; border: 2px solid transparent; cursor: pointer; }
+.collage-thumb.selected { border-color: #A1B8CA; }
+.collage-thumb:hover { border-color: #ccc; }
+.generate-section { margin-top: 12px; }
+.generate-section input { margin-bottom: 8px; }
+.btn-generate { display: flex; align-items: center; gap: 8px; }
+.form-actions { grid-column: 1 / -1; display: flex; gap: 12px; padding-top: 16px; border-top: 1px solid #eee; }
+.btn { padding: 12px 28px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn-primary { background: #312A29; color: #fff; }
+.btn-primary:hover { background: #4a4140; }
+.btn-secondary { background: #f0f0f0; color: #333; }
+.btn-secondary:hover { background: #e0e0e0; }
+.spinner { display: none; }
+.loading .spinner { display: inline-block; }
+.loading .btn-text { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Create New Deck</h1>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">← Back to Dashboard</a>
+</div>
+
+<form method="POST" action="{{ url_for('authoring.author_generate') }}" id="authorForm">
+<div class="author-form">
+    <!-- Left column: Content -->
+    <div>
+        <div class="form-section">
+            <h3>Content</h3>
+            <div class="form-group">
+                <label for="title">Deck Title</label>
+                <input type="text" id="title" name="title" placeholder="Will be extracted from content if blank">
+            </div>
+            <div class="form-group">
+                <label for="model_name">Deliverable Model</label>
+                <select id="model_name" name="model_name">
+                    <option value="">Custom (no model)</option>
+                    {% for group, group_models in models.items() %}
+                    <optgroup label="{{ group | title }}">
+                        {% for model in group_models %}
+                        <option value="{{ model.name }}">{{ model.label }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="markdown_content">Markdown Content</label>
+                <textarea id="markdown_content" name="markdown_content" placeholder="# Deck Title
+
+A brief subtitle or description.
+
+## Section One
+
+Content for the first section...
+
+## Section Two
+
+- Bullet point one
+- Bullet point two
+- Bullet point three"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right column: Theme & Collage -->
+    <div>
+        <div class="form-section">
+            <h3>Theme</h3>
+            <div class="form-group">
+                <label for="theme_name">Brand Theme</label>
+                <select id="theme_name" name="theme_name">
+                    <option value="synaptiq" selected>Synaptiq Default</option>
+                </select>
+            </div>
+            <div class="theme-preview">
+                <div class="theme-swatch" style="background: #312A29;" title="Soil"></div>
+                <div class="theme-swatch" style="background: #A1B8CA;" title="Arctic"></div>
+                <div class="theme-swatch" style="background: #F7CFA5;" title="Apricot"></div>
+                <div class="theme-swatch" style="background: #C6E1D9;" title="Mint"></div>
+                <div class="theme-swatch" style="background: #B6DDED;" title="Sky"></div>
+                <div class="theme-swatch" style="background: #F1DCD0;" title="Blush"></div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Title Slide Collage</h3>
+            <div class="collage-options">
+                <label><input type="radio" name="collage_mode" value="none" checked> No collage</label>
+                <label><input type="radio" name="collage_mode" value="existing"> Select from library</label>
+                <label><input type="radio" name="collage_mode" value="generate"> Generate with AI</label>
+            </div>
+
+            <input type="hidden" id="collage_id" name="collage_id" value="">
+
+            <!-- Existing collage gallery -->
+            <div id="collageGallery" style="display:none;">
+                {% if collages %}
+                <div class="collage-gallery">
+                    {% for c in collages %}
+                    <img src="#" data-id="{{ c.id }}" class="collage-thumb"
+                         alt="{{ c.name }}" title="{{ c.name }}"
+                         onclick="selectCollage({{ c.id }}, this)">
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="color:#888; font-size:13px;">No collages in library yet. Upload one or generate with AI.</p>
+                {% endif %}
+            </div>
+
+            <!-- Generate collage -->
+            <div id="collageGenerate" style="display:none;" class="generate-section">
+                <div class="form-group">
+                    <input type="text" id="collagePrompt" placeholder="e.g., Nature and technology, botanical elements with circuit diagrams">
+                </div>
+                <button type="button" class="btn btn-secondary btn-generate" onclick="generateCollage()">
+                    <span class="btn-text">Generate Collage</span>
+                    <span class="spinner">Generating...</span>
+                </button>
+                <div id="collageResults" class="collage-gallery" style="margin-top:12px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="generateBtn">
+            <span class="btn-text">Generate Previews</span>
+            <span class="spinner">Generating deck variants...</span>
+        </button>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Model template loading
+document.getElementById('model_name').addEventListener('change', function() {
+    var model = this.value;
+    if (!model) return;
+    fetch('/admin/author/model-template?model=' + encodeURIComponent(model))
+        .then(r => r.json())
+        .then(data => {
+            if (data.template) {
+                document.getElementById('markdown_content').value = data.template;
+            }
+        });
+});
+
+// Collage mode switching
+document.querySelectorAll('input[name="collage_mode"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+        document.getElementById('collageGallery').style.display = this.value === 'existing' ? 'block' : 'none';
+        document.getElementById('collageGenerate').style.display = this.value === 'generate' ? 'block' : 'none';
+        if (this.value === 'none') {
+            document.getElementById('collage_id').value = '';
+        }
+    });
+});
+
+function selectCollage(id, el) {
+    document.querySelectorAll('.collage-thumb').forEach(t => t.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('collage_id').value = id;
+}
+
+function generateCollage() {
+    var prompt = document.getElementById('collagePrompt').value;
+    if (!prompt) return;
+    var btn = document.querySelector('.btn-generate');
+    btn.classList.add('loading');
+    fetch('/admin/author/collages/generate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({prompt: prompt})
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.classList.remove('loading');
+        if (data.error) { alert(data.error); return; }
+        var results = document.getElementById('collageResults');
+        results.innerHTML = '';
+        (data.images || []).forEach(function(img) {
+            var el = document.createElement('img');
+            el.src = img.url || ('data:image/png;base64,' + img.b64);
+            el.className = 'collage-thumb';
+            el.onclick = function() { selectCollage(0, this); };
+            results.appendChild(el);
+        });
+    })
+    .catch(function() { btn.classList.remove('loading'); alert('Generation failed.'); });
+}
+
+// Form submit loading state
+document.getElementById('authorForm').addEventListener('submit', function() {
+    document.getElementById('generateBtn').classList.add('loading');
+});
+</script>
+{% endblock %}

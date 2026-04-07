@@ -14,7 +14,7 @@ if config.config_file_name is not None:
 target_metadata = None
 
 # Read DATABASE_URL from environment, falling back to config
-DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://showroom:showroom@localhost:5432/showroom')
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql+psycopg://showroom:showroom@localhost:5432/showroom')
 
 
 def run_migrations_offline() -> None:

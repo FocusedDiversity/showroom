@@ -1,0 +1,22 @@
+# Synaptiq Project Kick-Off Template
+# Used at the start of client engagements
+
+metadata:
+  title: Project Kick-Off
+  description: Template for structuring project kick-off presentations
+
+sections:
+  - name: Project Overview
+    description: What we are building, why, and the expected business impact.
+  - name: Objectives
+    description: Specific, measurable objectives for this engagement.
+  - name: Team & Roles
+    description: Synaptiq team members and client stakeholders with their roles.
+  - name: Timeline
+    description: Project phases, milestones, and key dates.
+  - name: Success Criteria
+    description: How we will measure project success at completion.
+  - name: Communication Plan
+    description: Meeting cadence, reporting schedule, and escalation paths.
+  - name: Next Steps
+    description: Immediate actions and deliverables for the first week.

@@ -1,6 +1,6 @@
 # Capability Plan: Deck Authoring
 
-## Step 1: Content Parser
+## Step 1: Content Parser [DONE]
 
 **Build:** The markdown-to-slides parser (`authoring/parser.py`). Takes raw markdown and a deliverable model name, splits content into slide data objects with `title`, `body`, `layout_hint`, and `section_label`. Supports `---` and `## ` as slide delimiters. Auto-detects layout hints (text-only, cards, stats, timeline, split) from content structure. First slide always treated as title slide.
 
@@ -10,7 +10,7 @@
 
 ---
 
-## Step 2: Theme Engine
+## Step 2: Theme Engine [DONE]
 
 **Build:** The theme system (`authoring/theme.py`). Define a `Theme` dataclass with primary/secondary/tertiary colors, font imports, font families, logo SVG, background colors, and top-bar gradient. Implement the default "Synaptiq" theme encoding the full brand guideline palette (Soil #312A29, Apricot #F7CFA5, Arctic #A1B8CA, etc.) and Google Font alternatives (Zilla Slab, Quicksand, Herr Von Muellerhoff, Abril Fatface). Theme outputs a CSS string and a metadata dict.
 
@@ -20,7 +20,7 @@
 
 ---
 
-## Step 3: Slide Templates
+## Step 3: Slide Templates [DONE]
 
 **Build:** Jinja2 HTML templates for each slide layout type in `templates/authoring/slides/`: `title.html`, `text.html`, `cards.html`, `stats.html`, `timeline.html`, `split.html`, `closing.html`. Each template receives slide data + theme CSS + theme metadata and renders a complete `<div class="slide">` block. Use the Sri deck (`Synaptiq_Deck_for_Sri_Branded.html`) as the reference for visual structure, spacing, and class naming.
 
@@ -30,7 +30,7 @@
 
 ---
 
-## Step 4: Deck Generator — Single Variant
+## Step 4: Deck Generator — Single Variant [DONE]
 
 **Build:** The core deck generator (`authoring/generator.py`). Takes a list of slide data objects, a theme, and a collage image path/data-URI. Assembles a complete self-contained HTML file: DOCTYPE, head (with font imports, inline CSS from theme), body (nav bar, deck container, slide divs rendered from templates), and inline JS for slide navigation. Use the Sri deck's nav bar and deck structure as the reference.
 
@@ -40,7 +40,7 @@
 
 ---
 
-## Step 5: Database Schema & Migrations
+## Step 5: Database Schema & Migrations [DONE]
 
 **Build:** Alembic migration adding four new tables: `collages`, `authoring_sessions`, `session_variants`, `session_feedback`. Use the schema from the spec. Run migration with `venv/bin/alembic upgrade head`.
 
@@ -50,7 +50,7 @@
 
 ---
 
-## Step 6: Collage Manager — Library & Upload
+## Step 6: Collage Manager — Library & Upload [DONE]
 
 **Build:** Collage manager (`authoring/collage.py`) with functions to: list collages (with filtering by tags), get a single collage, upload a new collage image (validates format/size, stores via storage abstraction, inserts into `collages` table), and get collage as base64 data URI for embedding. Add Flask routes: `GET /admin/author/collages` (JSON list), `POST /admin/author/collages/upload`.
 
@@ -60,7 +60,7 @@
 
 ---
 
-## Step 7: Collage Manager — Recraft.ai Integration
+## Step 7: Collage Manager — Recraft.ai Integration [DONE]
 
 **Build:** Add Recraft.ai API integration to the collage manager. Function `generate_collage(prompt, style_preset)` calls the Recraft.ai image generation API with the given prompt, requests 1280x720 images, and returns 2-3 image results. Selected image gets saved to the collage library. Add Flask route: `POST /admin/author/collages/generate`. API key from `RECRAFT_API_KEY` env var. Handle errors gracefully (return error message, don't crash).
 
@@ -70,7 +70,7 @@
 
 ---
 
-## Step 8: Variant Generation
+## Step 8: Variant Generation [DONE]
 
 **Build:** Extend the deck generator to produce 2-3 variants from the same content. Variant strategies: (1) vary layout template selection for ambiguous slides (e.g., a list could be `cards.html` or `text.html`), (2) shift color emphasis (Arctic-dominant vs. Apricot-dominant accents), (3) adjust title slide collage positioning (left-aligned vs. right-aligned vs. full-bleed). Each variant gets a `layout_config` and `color_config` JSON object describing its choices.
 
@@ -80,7 +80,7 @@
 
 ---
 
-## Step 9: Authoring Session Routes & Form UI
+## Step 9: Authoring Session Routes & Form UI [DONE]
 
 **Build:** Admin routes and Jinja2 templates for the authoring entry form (`/admin/author`). Template includes: deliverable model dropdown (populated from `deliverable-models/` directory), markdown textarea with model template pre-fill, theme dropdown (hardcoded to "Synaptiq" for now), collage selection area (gallery modal + generate panel). POST handler: parses content, creates an `authoring_sessions` row, generates 2-3 variants (stored via storage abstraction, tracked in `session_variants`), redirects to preview page.
 
@@ -90,7 +90,7 @@
 
 ---
 
-## Step 10: Preview Selection UI
+## Step 10: Preview Selection UI [DONE]
 
 **Build:** Preview page (`/admin/author/preview/<session_id>`). Jinja2 template showing a horizontal carousel of generated variants. Each variant shows the first 3 slides as thumbnails (rendered as small iframes or static screenshots). "Preview Full Deck" opens the variant HTML in a new tab. "Select This Option" POST marks the variant as selected and redirects to the refinement view.
 
@@ -100,7 +100,7 @@
 
 ---
 
-## Step 11: Refinement View & Feedback Loop
+## Step 11: Refinement View & Feedback Loop [DONE]
 
 **Build:** Refinement page (`/admin/author/refine/<session_id>`). Left panel: slide-by-slide preview of the selected variant (iframe or inline rendering). Right panel: feedback textarea, quick-action buttons (adjust colors, change layout, modify title slide, edit content). POST handler: saves feedback to `session_feedback` table, applies feedback to regenerate the variant (modifying layout_config, color_config, or content as appropriate), updates the stored HTML, refreshes the page. Show revision counter.
 
@@ -110,7 +110,7 @@
 
 ---
 
-## Step 12: Publish to Showroom
+## Step 12: Publish to Showroom [DONE]
 
 **Build:** "Publish to Showroom" action on the refinement page. Shows confirmation modal (deck title, description). POST handler: reads the selected variant's HTML from storage, creates a new deck using the existing Showroom deck creation logic (inserts into `decks` table, stores HTML via storage abstraction, generates slug), updates the authoring session status to "published", redirects to `/admin/deck/<new_deck_id>`.
 
@@ -120,7 +120,7 @@
 
 ---
 
-## Step 13: Deliverable Model Templates
+## Step 13: Deliverable Model Templates [DONE]
 
 **Build:** Create deliverable model YAML files organized by function. Sales models in `deliverable-models/sales/`: `discovery.yaml` (discovery session), `design.yaml` (design proposal) — `quote.yaml` already exists. Delivery models in `deliverable-models/delivery/`: `kick-off.yaml` (project kick-off), `progress-report.yaml` (engagement progress update), `strategy-deliverable.yaml` (data/AI strategy final deliverable). Each model defines sections (with names and descriptions) that map to slide groupings. Update the content parser to load models from both subdirectories and validate markdown against model structure. The authoring form's model dropdown reads from this directory, grouped by function.
 
@@ -130,7 +130,7 @@
 
 ---
 
-## Step 14: Admin Dashboard Integration
+## Step 14: Admin Dashboard Integration [DONE]
 
 **Build:** Add a "Create New Deck" button/link to the existing admin dashboard (`/admin`) that navigates to `/admin/author`. Add an "Authoring Sessions" section showing in-progress sessions (status: drafting/previewing/refining) with "Resume" links. Add a visual indicator on decks that were created via authoring (vs. manual upload).
 

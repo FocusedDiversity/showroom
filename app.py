@@ -18,6 +18,10 @@ app.teardown_appcontext(close_db)
 
 storage = get_storage()
 
+# Register authoring blueprint
+from authoring.routes import authoring_bp
+app.register_blueprint(authoring_bp)
+
 
 # ── Helpers ──────────────────────────────────────────────────────────
 
@@ -108,7 +112,15 @@ def admin_dashboard():
         GROUP BY d.id
         ORDER BY d.created_at DESC
     ''').fetchall()
-    return render_template('admin/dashboard.html', decks=decks)
+    # Fetch in-progress authoring sessions
+    authoring_sessions = db.execute(
+        """SELECT * FROM authoring_sessions
+           WHERE status IN ('drafting', 'previewing', 'refining')
+           ORDER BY updated_at DESC"""
+    ).fetchall()
+
+    return render_template('admin/dashboard.html', decks=decks,
+                           authoring_sessions=authoring_sessions)
 
 
 @app.route('/admin/upload', methods=['POST'])

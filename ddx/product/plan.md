@@ -48,4 +48,4 @@
 
 **Depends on:** nothing (uses existing deck management pipeline)
 
-**Status:** in progress
+**Status:** complete

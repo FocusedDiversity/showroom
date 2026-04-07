@@ -1,0 +1,42 @@
+{# Timeline slide — ordered steps or phases #}
+<div class="slide s-timeline {% if dark %}dark{% else %}light{% endif %}" data-slide="{{ slide_index }}">
+  <div class="top-bar"></div>
+  {% if dark %}
+  <div class="glow"></div>
+  {% else %}
+  <div class="left-accent"></div>
+  {% endif %}
+  <div class="inner">
+    {% if section_label %}
+    <div class="section-label">{{ section_label }}</div>
+    {% endif %}
+    <h1>{{ title | safe }}</h1>
+    <div class="timeline-full">
+      {% for phase in phases %}
+      <div class="phase">
+        <div class="phase-ind">
+          <div class="phase-dot">{{ loop.index }}</div>
+          {% if not loop.last %}
+          <div class="phase-line"></div>
+          {% endif %}
+        </div>
+        <div class="phase-content">
+          {% if phase.weeks %}
+          <div class="phase-weeks">{{ phase.weeks }}</div>
+          {% endif %}
+          <div class="phase-title">{{ phase.title }}</div>
+          {% if phase.description %}
+          <div class="phase-desc">{{ phase.description }}</div>
+          {% endif %}
+          {% if phase.highlight %}
+          <div class="phase-quick-win">{{ phase.highlight }}</div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="bot">
+      <span class="page-num{% if dark %}-dark{% endif %}">{{ slide_index + 1 }}</span>
+    </div>
+  </div>
+</div>

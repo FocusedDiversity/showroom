@@ -1,0 +1,34 @@
+{# Cards slide — 2-4 card grid layout #}
+<div class="slide s-cards {% if dark %}dark{% else %}light{% endif %}" data-slide="{{ slide_index }}">
+  <div class="top-bar"></div>
+  {% if not dark %}
+  <div class="left-accent"></div>
+  {% else %}
+  <div class="glow"></div>
+  {% endif %}
+  <div class="inner">
+    {% if section_label %}
+    <div class="section-label">{{ section_label }}</div>
+    {% endif %}
+    <h1>{{ title | safe }}</h1>
+    <div class="cards">
+      {% for card in cards %}
+      <div class="card">
+        {% if card.icon %}
+        <div class="card-icon">{{ card.icon | safe }}</div>
+        {% endif %}
+        {% if card.title %}
+        <h2>{{ card.title }}</h2>
+        {% endif %}
+        <p>{{ card.body }}</p>
+        {% if card.footer %}
+        <div class="synaptiq-line">{{ card.footer }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="bot">
+      <span class="page-num{% if dark %}-dark{% endif %}">{{ slide_index + 1 }}</span>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Preview Variants - {{ session.title }} - Showroom{% endblock %}
+
+{% block head %}
+<style>
+.preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.preview-header h1 { font-size: 24px; }
+.variant-grid { display: grid; grid-template-columns: repeat({{ variants|length }}, 1fr); gap: 24px; }
+.variant-card {
+    background: #fff; border: 2px solid #eee; border-radius: 12px;
+    overflow: hidden; transition: border-color 0.2s;
+}
+.variant-card:hover { border-color: #A1B8CA; }
+.variant-preview {
+    width: 100%; aspect-ratio: 16/9; border: none;
+    pointer-events: none; background: #000;
+}
+.variant-info { padding: 20px; }
+.variant-info h3 { font-size: 16px; margin-bottom: 8px; }
+.variant-info p { font-size: 13px; color: #888; margin-bottom: 16px; }
+.variant-actions { display: flex; gap: 8px; }
+.btn { padding: 10px 20px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-block; text-align: center; }
+.btn-primary { background: #312A29; color: #fff; }
+.btn-primary:hover { background: #4a4140; }
+.btn-secondary { background: #f0f0f0; color: #333; }
+.btn-secondary:hover { background: #e0e0e0; }
+.back-link { margin-top: 24px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="preview-header">
+    <div>
+        <h1>Choose a Variant</h1>
+        <p style="color:#888;">{{ session.title }} — {{ variants|length }} options generated</p>
+    </div>
+</div>
+
+<div class="variant-grid">
+    {% for variant in variants %}
+    <div class="variant-card">
+        <iframe class="variant-preview"
+                src="{{ url_for('authoring.view_variant', session_id=session.id, variant_id=variant.id) }}"
+                sandbox="allow-scripts allow-same-origin"
+                loading="lazy"></iframe>
+        <div class="variant-info">
+            <h3>Option {{ loop.index }}</h3>
+            <p>Variant {{ loop.index }} of {{ variants|length }}</p>
+            <div class="variant-actions">
+                <form method="POST" action="{{ url_for('authoring.select_variant', session_id=session.id) }}" style="display:inline;">
+                    <input type="hidden" name="variant_id" value="{{ variant.id }}">
+                    <button type="submit" class="btn btn-primary">Select This</button>
+                </form>
+                <a href="{{ url_for('authoring.view_variant', session_id=session.id, variant_id=variant.id) }}"
+                   target="_blank" class="btn btn-secondary">Preview Full</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="back-link">
+    <a href="{{ url_for('authoring.author_form') }}" class="btn btn-secondary">← Back to Editor</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Helper to parse JSON in templates
+if (!window.JSON._fromJson) {
+    // Jinja tojson | from_json workaround — handled server side
+}
+</script>
+{% endblock %}

@@ -1,0 +1,22 @@
+# Synaptiq Design Proposal Template
+# Used for design proposals after discovery
+
+metadata:
+  title: Design Proposal
+  description: Template for structuring AI solution design proposals
+
+sections:
+  - name: Executive Summary
+    description: One-paragraph overview of the proposed solution and expected outcomes.
+  - name: Problem Statement
+    description: The specific business problem this design addresses.
+  - name: Solution Architecture
+    description: High-level architecture and key components of the proposed solution.
+  - name: Data Requirements
+    description: Data sources, quality requirements, and integration points.
+  - name: Implementation Plan
+    description: Phased approach to building and deploying the solution.
+  - name: Team & Resources
+    description: Required team composition and resource allocation.
+  - name: Investment & Timeline
+    description: Cost breakdown and project timeline.
