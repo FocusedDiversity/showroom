@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Import from PPTX - Showroom{% endblock %}
+
+{% block head %}
+<style>
+.import-container { max-width: 800px; margin: 24px auto; }
+.form-section { margin-bottom: 32px; }
+.form-section h3 { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 12px; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+.form-group input[type="text"], .form-group input[type="file"] {
+    width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px;
+    font-family: inherit; font-size: 14px; background: #fff;
+}
+.form-group input:focus { outline: none; border-color: #A1B8CA; box-shadow: 0 0 0 3px rgba(161,184,202,0.15); }
+.btn { padding: 12px 28px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-block; }
+.btn-primary { background: #312A29; color: #fff; }
+.btn-primary:hover { background: #4a4140; }
+.btn-secondary { background: #f0f0f0; color: #333; }
+.btn-secondary:hover { background: #e0e0e0; }
+.btn-success { background: #1D6E6F; color: #fff; }
+.btn-success:hover { background: #256d6e; }
+
+/* Extraction preview */
+.extraction-preview { background: #f9f9f9; border: 1px solid #eee; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+.color-swatches { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+.swatch-item { text-align: center; }
+.swatch-circle { width: 48px; height: 48px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.1); margin: 0 auto 4px; }
+.swatch-label { font-size: 10px; color: #888; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.font-preview { margin-bottom: 16px; padding: 16px; background: #fff; border-radius: 8px; border: 1px solid #eee; }
+.font-preview h4 { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.font-sample-title { font-size: 28px; margin-bottom: 4px; }
+.font-sample-body { font-size: 16px; color: #555; }
+.font-original { font-size: 11px; color: #aaa; margin-top: 4px; }
+
+.layout-badge { display: inline-block; padding: 4px 12px; background: #e8f4f8; border-radius: 12px; font-size: 13px; font-weight: 500; color: #1D6E6F; }
+
+.image-thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
+.image-thumb { width: 100px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+
+.form-actions { display: flex; gap: 12px; padding-top: 16px; border-top: 1px solid #eee; }
+.upload-hint { font-size: 13px; color: #888; margin-top: 6px; }
+</style>
+{% if extraction %}
+<link href="https://fonts.googleapis.com/css2?family={{ extraction.fonts.title_google.import }}&family={{ extraction.fonts.content_google.import }}&display=swap" rel="stylesheet">
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="import-container">
+    <div class="page-header">
+        <h1>Import from PowerPoint</h1>
+        <a href="{{ url_for('authoring.author_form') }}" class="btn btn-secondary">← Back to Author</a>
+    </div>
+
+    {% if not extraction %}
+    <!-- Upload Form -->
+    <form method="POST" enctype="multipart/form-data" action="{{ url_for('authoring.pptx_import') }}">
+        <div class="form-section">
+            <h3>Upload PPTX File</h3>
+            <div class="form-group">
+                <label for="pptx_file">PowerPoint File</label>
+                <input type="file" id="pptx_file" name="pptx_file" accept=".pptx">
+                <div class="upload-hint">Upload a .pptx file to extract its color palette, fonts, and images.</div>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Extract Design</button>
+        </div>
+    </form>
+
+    {% else %}
+    <!-- Extraction Preview + Save -->
+    <div class="extraction-preview">
+        <div class="form-section">
+            <h3>Extracted Colors</h3>
+            <div class="color-swatches">
+                {% for label, color in extraction.colors.items() %}
+                {% if not color.startswith('linear') and not color.startswith('rgba') %}
+                <div class="swatch-item">
+                    <div class="swatch-circle" style="background: {{ color }};"></div>
+                    <div class="swatch-label">{{ label | replace('_', ' ') }}</div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Extracted Fonts</h3>
+            <div class="font-preview">
+                <h4>Title Font</h4>
+                <div class="font-sample-title" style="font-family: {{ extraction.fonts.title_google.family }};">
+                    The quick brown fox jumps over the lazy dog
+                </div>
+                <div class="font-original">{{ extraction.fonts.title_font }} → {{ extraction.fonts.title_google.family }}</div>
+            </div>
+            <div class="font-preview">
+                <h4>Content Font</h4>
+                <div class="font-sample-body" style="font-family: {{ extraction.fonts.content_google.family }};">
+                    The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.
+                </div>
+                <div class="font-original">{{ extraction.fonts.content_font }} → {{ extraction.fonts.content_google.family }}</div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Base Layout</h3>
+            <p>Closest match: <span class="layout-badge">{{ extraction.base_layout | title }}</span></p>
+        </div>
+
+        {% if extraction.image_count > 0 %}
+        <div class="form-section">
+            <h3>Extracted Images</h3>
+            <p>{{ extraction.image_count }} image(s) found — will be saved to the collage library.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <form method="POST" action="{{ url_for('authoring.pptx_import_save') }}">
+        <!-- Pass extraction data as hidden fields -->
+        <input type="hidden" name="colors_json" value="{{ extraction.colors_json }}">
+        <input type="hidden" name="fonts_json" value="{{ extraction.fonts_json }}">
+        <input type="hidden" name="style_json" value="{{ extraction.style_json }}">
+        <input type="hidden" name="base_layout" value="{{ extraction.base_layout }}">
+        <input type="hidden" name="source_filename" value="{{ extraction.source_filename }}">
+
+        <div class="form-section">
+            <h3>Name Your Design</h3>
+            <div class="form-group">
+                <label for="palette_name">Palette Name</label>
+                <input type="text" id="palette_name" name="palette_name" placeholder="e.g., Acme Corp Brand" required>
+            </div>
+            <div class="form-group">
+                <label for="layout_name">Layout Name</label>
+                <input type="text" id="layout_name" name="layout_name" placeholder="e.g., Acme Corporate" required>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success">Save & Use</button>
+            <a href="{{ url_for('authoring.pptx_import') }}" class="btn btn-secondary">Upload Different File</a>
+        </div>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

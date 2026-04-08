@@ -1,0 +1,23 @@
+{# Quote / testimonial slide — large blockquote with attribution #}
+<div class="slide s-quote {% if dark %}dark{% else %}light{% endif %}" data-slide="{{ slide_index }}">
+  <div class="top-bar"></div>
+  {% if dark %}
+  <div class="glow"></div>
+  {% endif %}
+  <div class="inner">
+    {% if section_label %}
+    <div class="section-label">{{ section_label }}</div>
+    {% endif %}
+    {% if title %}
+    <h1>{{ title | safe }}</h1>
+    {% endif %}
+    <div class="quote-mark">"</div>
+    <blockquote>{{ quote_text | safe }}</blockquote>
+    {% if attribution %}
+    <div class="quote-attribution">— {{ attribution }}</div>
+    {% endif %}
+  </div>
+  <div class="bot">
+    <span class="page-num{% if dark %}-dark{% endif %}">{{ slide_index + 1 }}</span>
+  </div>
+</div>

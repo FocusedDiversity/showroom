@@ -22,11 +22,13 @@ MODELS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'deliverab
 class Slide:
     title: str = ''
     body: str = ''
-    layout_hint: str = 'text'
+    layout_hint: str = 'content'
     section_label: str = ''
     is_title_slide: bool = False
     subtitle: str = ''
     items: list = field(default_factory=list)
+    table_data: list = field(default_factory=list)       # Parsed table rows
+    matrix_quadrants: list = field(default_factory=list)  # 4 quadrants for 2x2 matrix
 
 
 def load_model(model_name):
@@ -47,44 +49,133 @@ def load_model(model_name):
     return None
 
 
-def _detect_layout_hint(body_text):
-    """Auto-detect layout hint from content structure."""
+def _detect_explicit_type(body_text):
+    """Check for explicit type markers like <!-- type:matrix --> or <!-- blank -->."""
+    m = re.search(r'<!--\s*type:\s*(\S+)\s*-->', body_text)
+    if m:
+        return m.group(1).strip()
+    if re.search(r'<!--\s*blank\s*-->', body_text):
+        return 'blank'
+    return None
+
+
+def _detect_keyword_type(title):
+    """Detect slide type from title keywords."""
+    if not title:
+        return None
+    t = title.lower()
+
+    keyword_map = [
+        (['agenda', 'roadmap', 'outline', 'table of contents'], 'agenda'),
+        (['problem', 'challenge', 'context', 'pain point'], 'problem'),
+        (['summary', 'takeaway', 'key points', 'recap', 'in summary'], 'summary'),
+        (['recommendation', 'next steps', 'call to action', 'action items'], 'cta'),
+        (['thank you', 'thanks', 'questions', 'q&a', 'contact'], 'closing'),
+        (['compare', 'comparison', ' vs ', 'versus', 'before and after'], 'comparison'),
+    ]
+    for keywords, hint in keyword_map:
+        if any(kw in t for kw in keywords):
+            return hint
+    return None
+
+
+def _has_table(body_text):
+    """Check if body contains a markdown pipe-delimited table."""
+    lines = [l.strip() for l in body_text.strip().split('\n') if l.strip()]
+    pipe_rows = [l for l in lines if l.startswith('|') and l.endswith('|')]
+    # Need at least header + separator + 1 data row
+    return len(pipe_rows) >= 3
+
+
+def _parse_table_data(body_text):
+    """Parse a markdown pipe-delimited table into a list of lists."""
+    rows = []
+    for line in body_text.strip().split('\n'):
+        stripped = line.strip()
+        if stripped.startswith('|') and stripped.endswith('|'):
+            cells = [c.strip() for c in stripped.strip('|').split('|')]
+            # Skip separator rows (---|---|---)
+            if all(re.match(r'^[-:]+$', c) for c in cells):
+                continue
+            rows.append(cells)
+    return rows
+
+
+def _detect_layout_hint(title, body_text):
+    """Auto-detect layout hint from title keywords and content structure.
+
+    Returns one of the 17 slide type hints.
+    """
     lines = [l.strip() for l in body_text.strip().split('\n') if l.strip()]
 
-    if not lines:
-        return 'text'
+    # 1. Explicit markers
+    explicit = _detect_explicit_type(body_text)
+    if explicit:
+        return explicit
 
-    # Timeline: numbered list items (1. 2. 3.) or "Phase/Step/Week" keywords
-    # Check before stats since numbered items can look like numbers
+    # 2. Keyword-based detection from title
+    keyword_hint = _detect_keyword_type(title)
+    if keyword_hint:
+        return keyword_hint
+
+    # 3. Empty/minimal body → section-divider or blank
+    if not lines:
+        return 'section-divider'
+
+    # 4. Table detection (pipe-delimited rows)
+    if _has_table(body_text):
+        return 'table'
+
+    # 5. H3 headings analysis
+    h3_count = sum(1 for l in lines if l.startswith('### '))
+    # Exactly 4 H3s → 2x2 matrix
+    if h3_count == 4:
+        return 'matrix'
+    # 2 H3s with parallel structure → comparison
+    if h3_count == 2:
+        return 'comparison'
+
+    # 6. Blockquote as primary content → quote
+    blockquote_lines = [l for l in lines if l.startswith('> ')]
+    non_blockquote = [l for l in lines if not l.startswith('> ')]
+    if blockquote_lines and len(blockquote_lines) >= len(non_blockquote):
+        return 'quote'
+
+    # 7. Image as primary content → visual
+    image_lines = [l for l in lines if re.match(r'!\[', l)]
+    non_image = [l for l in lines if not re.match(r'!\[', l)]
+    if image_lines and len(non_image) <= 2:
+        return 'visual'
+
+    # 8. Timeline: numbered list items or phase/step/week keywords
     numbered_count = sum(1 for l in lines if re.match(r'^\d+[\.\)]\s', l))
     timeline_keywords = sum(1 for l in lines
                            if re.search(r'\b(phase|step|week|stage|month|day)\b', l, re.I))
     if numbered_count >= 3 or timeline_keywords >= 3:
         return 'timeline'
 
-    # Stats: lines that start with a currency/number/percent (but NOT numbered list items)
+    # 9. Stats / data-chart: currency/percent values
     stat_pattern = re.compile(r'^[\$€£]\d[\d,.]*|^\d[\d,.]*[%xX+]')
     stat_lines = sum(1 for l in lines
                      if stat_pattern.match(l) and not re.match(r'^\d+[\.\)]\s', l))
     if stat_lines >= 2:
-        return 'stats'
+        return 'data-chart'
 
-    # Cards: 3+ bullet items or 3+ H3 headings
+    # 10. Cards: 3+ H3 headings or 4+ bullet items
     bullet_count = sum(1 for l in lines if l.startswith('- ') or l.startswith('* '))
-    h3_count = sum(1 for l in lines if l.startswith('### '))
     if h3_count >= 3:
-        return 'cards'
+        return 'content'
     if bullet_count >= 4:
-        return 'cards'
+        return 'content'
 
-    # Split: contains an image reference or blockquote + other content
-    has_image = any(re.match(r'!\[', l) for l in lines)
-    has_blockquote = any(l.startswith('> ') for l in lines)
-    non_special = [l for l in lines if not l.startswith('> ') and not re.match(r'!\[', l)]
-    if (has_image or has_blockquote) and len(non_special) >= 2:
-        return 'split'
+    # 11. Key message: very short body (≤50 words, single paragraph-like)
+    word_count = len(' '.join(lines).split())
+    paragraph_breaks = body_text.count('\n\n')
+    if word_count <= 50 and paragraph_breaks <= 1:
+        return 'key-message'
 
-    return 'text'
+    # 12. Default
+    return 'content'
 
 
 def _extract_items(body_text):
@@ -187,7 +278,28 @@ def _parse_chunk(chunk_text, index, model_sections=None):
 
     # Auto-detect layout if not title slide
     if not slide.is_title_slide:
-        slide.layout_hint = _detect_layout_hint(slide.body)
+        slide.layout_hint = _detect_layout_hint(slide.title, slide.body)
+
+    # Parse structured data for specific types
+    if slide.layout_hint == 'table' and slide.body:
+        slide.table_data = _parse_table_data(slide.body)
+    elif slide.layout_hint == 'matrix' and slide.body:
+        # Extract 4 quadrants from H3 sections
+        quadrants = []
+        current_q = None
+        for line in slide.body.strip().split('\n'):
+            stripped = line.strip()
+            if stripped.startswith('### '):
+                if current_q:
+                    quadrants.append(current_q)
+                current_q = {'title': stripped[4:], 'body': ''}
+            elif current_q is not None and stripped:
+                if current_q['body']:
+                    current_q['body'] += ' '
+                current_q['body'] += stripped
+        if current_q:
+            quadrants.append(current_q)
+        slide.matrix_quadrants = quadrants[:4]
 
     # Map section labels from model
     if model_sections and slide.title:
@@ -248,6 +360,12 @@ def parse_markdown(markdown, model_name=None):
             continue
         slide = _parse_chunk(chunk, i, model_sections)
         slides.append(slide)
+
+    # Last slide defaults to closing if not explicitly typed otherwise
+    if len(slides) > 1 and slides[-1].layout_hint == 'content':
+        last_title = slides[-1].title.lower() if slides[-1].title else ''
+        if any(kw in last_title for kw in ['thank', 'question', 'q&a', 'contact', 'closing']):
+            slides[-1].layout_hint = 'closing'
 
     return slides
 

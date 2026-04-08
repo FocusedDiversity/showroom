@@ -1,0 +1,20 @@
+{# Key message slide — single centered statement in large display font #}
+<div class="slide s-key-message {% if dark %}dark{% else %}light{% endif %}" data-slide="{{ slide_index }}">
+  <div class="top-bar"></div>
+  {% if dark %}
+  <div class="glow"></div>
+  {% endif %}
+  <div class="inner">
+    {% if section_label %}
+    <div class="section-label">{{ section_label }}</div>
+    {% endif %}
+    <h1>{{ title | safe }}</h1>
+    {% if body_html %}
+    <div class="message-support">{{ body_html | safe }}</div>
+    {% endif %}
+    <div class="accent-line"></div>
+  </div>
+  <div class="bot">
+    <span class="page-num{% if dark %}-dark{% endif %}">{{ slide_index + 1 }}</span>
+  </div>
+</div>

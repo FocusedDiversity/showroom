@@ -1,0 +1,20 @@
+{# Section divider slide — large centered title, no body #}
+<div class="slide s-section-divider {% if dark %}dark{% else %}light{% endif %}" data-slide="{{ slide_index }}">
+  <div class="top-bar"></div>
+  {% if dark %}
+  <div class="glow"></div>
+  {% endif %}
+  <div class="inner">
+    {% if section_label %}
+    <div class="section-label">{{ section_label }}</div>
+    {% endif %}
+    <h1>{{ title | safe }}</h1>
+    {% if subtitle %}
+    <div class="divider-line"></div>
+    <div class="subtitle">{{ subtitle }}</div>
+    {% endif %}
+  </div>
+  <div class="bot">
+    <span class="page-num{% if dark %}-dark{% endif %}">{{ slide_index + 1 }}</span>
+  </div>
+</div>

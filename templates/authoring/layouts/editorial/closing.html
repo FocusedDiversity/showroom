@@ -1,0 +1,30 @@
+{# Closing / thank you slide #}
+<div class="slide s-closing {% if dark %}dark{% else %}light{% endif %}" data-slide="{{ slide_index }}">
+  <div class="top-bar"></div>
+  {% if dark %}
+  <div class="glow"></div>
+  {% endif %}
+  <div class="inner">
+    <h1>{{ title | safe }}</h1>
+    {% if subtitle %}
+    <div class="divider-line"></div>
+    <div class="closing-sub">{{ subtitle }}</div>
+    {% endif %}
+    {% if body_html %}
+    <div class="closing-body">{{ body_html | safe }}</div>
+    {% endif %}
+    {% if cta_text %}
+    <div class="cta-box">
+      <div class="cta-text">{{ cta_text }}</div>
+      {% if cta_email %}
+      <div class="cta-email">{{ cta_email }}</div>
+      {% endif %}
+    </div>
+    {% endif %}
+    <div class="bot">
+      <div class="bot-right">
+        {{ logo_svg | safe }}
+      </div>
+    </div>
+  </div>
+</div>

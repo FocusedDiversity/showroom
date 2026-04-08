@@ -49,3 +49,23 @@
 **Depends on:** nothing (uses existing deck management pipeline)
 
 **Status:** complete
+
+---
+
+### 6. deck-design-system
+
+**Description:** Separates color palettes from slide layouts into independently selectable dimensions. Expands slide templates from 7 to 17 types. Users preview and choose one palette + one layout before generating their deck.
+
+**Depends on:** deck-authoring
+
+**Status:** complete
+
+---
+
+### 7. pptx-import
+
+**Description:** Upload a .pptx file to extract fonts, colors, style cues, and images into a new custom color palette and layout for use in deck generation.
+
+**Depends on:** deck-design-system
+
+**Status:** complete

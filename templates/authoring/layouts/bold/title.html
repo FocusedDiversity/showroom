@@ -1,0 +1,35 @@
+{# Title slide — collage, deck title, subtitle, logo #}
+<div class="slide s-title {% if dark %}dark{% else %}light{% endif %}" data-slide="{{ slide_index }}">
+  <div class="top-bar"></div>
+  {% if dark %}
+  <div class="grid-overlay"></div>
+  <div class="glow glow-1"></div>
+  <div class="glow glow-2"></div>
+  {% endif %}
+  <div class="inner">
+    {% if section_label %}
+    <div class="draft-tag">{{ section_label }}</div>
+    {% endif %}
+    <h1>{{ title | safe }}</h1>
+    {% if subtitle %}
+    <div class="subtitle">{{ subtitle }}</div>
+    {% endif %}
+    {% if prepared_for %}
+    <div class="prepared-for">Prepared for <strong>{{ prepared_for }}</strong></div>
+    {% endif %}
+    <div class="aiq-tag">
+      <span class="aiq-label">THE HUMANKIND OF AI™</span>
+    </div>
+  </div>
+  {% if collage_data_uri %}
+  <div class="collage">
+    <img src="{{ collage_data_uri }}" alt="Title collage">
+  </div>
+  {% endif %}
+  <div class="bot">
+    <span class="page-num">{{ slide_index + 1 }}</span>
+    <div class="bot-right">
+      {{ logo_svg | safe }}
+    </div>
+  </div>
+</div>

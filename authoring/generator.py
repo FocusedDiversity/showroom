@@ -1,9 +1,9 @@
 """
-Deck Generator — assembles slides, theme, and collage into a self-contained HTML deck.
+Deck Generator — assembles slides, palette, layout, and collage into a self-contained HTML deck.
 
-Takes a list of Slide objects from the parser, a Theme from the theme engine,
-and an optional collage image (data URI or path), and produces a complete
-HTML file using the deck_shell.html + slide templates.
+Takes a list of Slide objects from the parser, a Palette from palettes.py,
+a Layout from layouts.py, and an optional collage image (data URI), and
+produces a complete HTML file using the layout's shell + slide templates.
 """
 
 import re
@@ -139,6 +139,8 @@ def _inline_formatting(text):
     return text
 
 
+# ── Body content parsers for specific slide types ─────────────────────
+
 def _parse_cards_from_body(body_text):
     """Parse card data from body text with H3 headings or bullet items."""
     cards = []
@@ -169,7 +171,6 @@ def _parse_cards_from_body(body_text):
         m = re.match(r'^[-*]\s+(.+)$', stripped)
         if m:
             text = m.group(1)
-            # Try to split on colon or dash for title/body
             parts = re.split(r':\s+|—\s+|–\s+', text, maxsplit=1)
             if len(parts) == 2:
                 cards.append({'title': parts[0], 'body': parts[1], 'icon': '', 'footer': ''})
@@ -185,7 +186,6 @@ def _parse_stats_from_body(body_text):
     lines = [l.strip() for l in body_text.strip().split('\n') if l.strip()]
 
     for line in lines:
-        # Match patterns like "$1.2M revenue impact" or "95% accuracy"
         m = re.match(r'^([\$€£]?[\d,.]+[%xX+]?[\w]*)\s+(.+)$', line)
         if m:
             stats.append({
@@ -194,7 +194,6 @@ def _parse_stats_from_body(body_text):
                 'description': '',
             })
         else:
-            # Try to use the whole line as a stat
             stats.append({'value': line, 'label': '', 'description': ''})
 
     return stats
@@ -206,11 +205,9 @@ def _parse_timeline_from_body(body_text):
     lines = [l.strip() for l in body_text.strip().split('\n') if l.strip()]
 
     for line in lines:
-        # Numbered items: "1. Phase one: Description"
         m = re.match(r'^\d+[\.\)]\s+(.+)$', line)
         if m:
             text = m.group(1)
-            # Try to extract weeks/timing
             weeks_match = re.match(r'(Week\s+[\d-]+|Phase\s+\w+|Month\s+[\d-]+):\s*(.+)', text, re.I)
             if weeks_match:
                 phases.append({
@@ -220,7 +217,6 @@ def _parse_timeline_from_body(body_text):
                     'highlight': '',
                 })
             else:
-                # Split on colon
                 parts = text.split(':', 1)
                 if len(parts) == 2:
                     phases.append({
@@ -238,7 +234,6 @@ def _parse_timeline_from_body(body_text):
                     })
             continue
 
-        # Lines with week/phase keywords
         m = re.match(r'(Week\s+[\d-]+|Phase\s+\w+|Month\s+[\d-]+):\s*(.+)', line, re.I)
         if m:
             phases.append({
@@ -268,13 +263,106 @@ def _parse_split_from_body(body_text):
     return left_html, right_html
 
 
-def render_slide(slide, slide_index, theme, collage_data_uri='', dark=False):
-    """Render a single slide to HTML using the appropriate template."""
-    env = _get_jinja_env()
-    meta = theme.to_metadata()
+def _parse_comparison_from_body(body_text):
+    """Parse comparison columns from body with 2 H3 headings."""
+    columns = []
+    current_col = None
+    body_lines = []
 
-    layout = slide.layout_hint
-    template_name = f'authoring/slides/{layout}.html'
+    for line in body_text.strip().split('\n'):
+        stripped = line.strip()
+        if stripped.startswith('### '):
+            if current_col:
+                current_col['body_html'] = _markdown_body_to_html('\n'.join(body_lines))
+                columns.append(current_col)
+                body_lines = []
+            current_col = {'title': stripped[4:], 'body_html': ''}
+        elif current_col is not None:
+            body_lines.append(line)
+
+    if current_col:
+        current_col['body_html'] = _markdown_body_to_html('\n'.join(body_lines))
+        columns.append(current_col)
+
+    # Fallback: if no H3s, split body in half
+    if not columns:
+        all_lines = body_text.strip().split('\n')
+        mid = len(all_lines) // 2
+        columns = [
+            {'title': '', 'body_html': _markdown_body_to_html('\n'.join(all_lines[:mid]))},
+            {'title': '', 'body_html': _markdown_body_to_html('\n'.join(all_lines[mid:]))},
+        ]
+
+    return columns
+
+
+def _parse_quote_from_body(body_text):
+    """Extract blockquote text and attribution."""
+    quote_lines = []
+    attribution = ''
+
+    for line in body_text.strip().split('\n'):
+        stripped = line.strip()
+        if stripped.startswith('> '):
+            quote_lines.append(stripped[2:])
+        elif stripped.startswith('—') or stripped.startswith('--'):
+            attribution = stripped.lstrip('—- ').strip()
+        elif not quote_lines:
+            # Before the quote — might be intro text, skip
+            pass
+        elif stripped:
+            # After quote — try as attribution
+            attribution = stripped
+
+    quote_text = ' '.join(quote_lines) if quote_lines else body_text.strip()
+    return _inline_formatting(quote_text), attribution
+
+
+def _extract_items(body_text):
+    """Extract bullet/numbered items for agenda, summary, etc."""
+    items = []
+    for line in body_text.strip().split('\n'):
+        stripped = line.strip()
+        m = re.match(r'^[-*]\s+(.+)$', stripped)
+        if m:
+            items.append(m.group(1))
+            continue
+        m = re.match(r'^\d+[\.\)]\s+(.+)$', stripped)
+        if m:
+            items.append(m.group(1))
+    return items
+
+
+def _parse_visual_from_body(body_text):
+    """Extract image URI and caption from body."""
+    image_uri = ''
+    caption = ''
+    other_lines = []
+
+    for line in body_text.strip().split('\n'):
+        stripped = line.strip()
+        m = re.match(r'!\[([^\]]*)\]\(([^)]+)\)', stripped)
+        if m:
+            caption = m.group(1) or caption
+            image_uri = m.group(2)
+        else:
+            other_lines.append(stripped)
+
+    if not caption and other_lines:
+        caption = ' '.join(l for l in other_lines if l)
+
+    return image_uri, caption
+
+
+# ── Slide rendering ──────────────────────────────────────────────────
+
+def render_slide(slide, slide_index, palette, layout, collage_data_uri='', dark=False):
+    """Render a single slide to HTML using the layout's template."""
+    env = _get_jinja_env()
+    palette_meta = palette.to_metadata()
+
+    hint = slide.layout_hint
+    template_path = f'{layout.template_dir}/{hint}.html'
 
     # Common context
     ctx = {
@@ -282,60 +370,95 @@ def render_slide(slide, slide_index, theme, collage_data_uri='', dark=False):
         'title': _inline_formatting(html_module.escape(slide.title)),
         'section_label': slide.section_label,
         'dark': dark,
-        'logo_svg': meta['logo_svg'],
+        'logo_svg': _get_logo_svg(dark),
     }
 
-    if layout == 'title':
+    if hint == 'title':
         ctx['subtitle'] = slide.subtitle
         ctx['collage_data_uri'] = collage_data_uri
-        ctx['prepared_for'] = ''  # Can be set by caller
-        template = env.get_template(template_name)
-        return template.render(**ctx)
+        ctx['prepared_for'] = ''
 
-    elif layout == 'cards':
-        ctx['cards'] = _parse_cards_from_body(slide.body)
-        template = env.get_template(template_name)
-        return template.render(**ctx)
+    elif hint == 'content':
+        ctx['body_html'] = _markdown_body_to_html(slide.body)
+        ctx['callout'] = ''
 
-    elif layout == 'stats':
+    elif hint == 'data-chart':
         ctx['stats'] = _parse_stats_from_body(slide.body)
-        template = env.get_template(template_name)
-        return template.render(**ctx)
 
-    elif layout == 'timeline':
+    elif hint == 'timeline':
         ctx['phases'] = _parse_timeline_from_body(slide.body)
-        template = env.get_template(template_name)
-        return template.render(**ctx)
 
-    elif layout == 'split':
+    elif hint == 'split':
         left_html, right_html = _parse_split_from_body(slide.body)
         ctx['left_html'] = left_html
         ctx['right_html'] = right_html
-        template = env.get_template(template_name)
-        return template.render(**ctx)
 
-    elif layout == 'closing':
-        ctx['subtitle'] = slide.subtitle or slide.body.split('\n')[0] if slide.body else ''
+    elif hint == 'closing':
+        ctx['subtitle'] = slide.subtitle or (slide.body.split('\n')[0] if slide.body else '')
         ctx['body_html'] = _markdown_body_to_html(slide.body)
         ctx['cta_text'] = ''
         ctx['cta_email'] = ''
-        template = env.get_template(template_name)
-        return template.render(**ctx)
+
+    elif hint == 'section-divider':
+        ctx['subtitle'] = slide.subtitle or ''
+
+    elif hint == 'agenda':
+        ctx['items'] = _extract_items(slide.body) or slide.items
+
+    elif hint == 'problem':
+        ctx['body_html'] = _markdown_body_to_html(slide.body)
+        ctx['headline'] = ''
+
+    elif hint == 'key-message':
+        ctx['body_html'] = _markdown_body_to_html(slide.body)
+
+    elif hint == 'comparison':
+        ctx['columns'] = _parse_comparison_from_body(slide.body)
+
+    elif hint == 'matrix':
+        ctx['quadrants'] = slide.matrix_quadrants if slide.matrix_quadrants else []
+
+    elif hint == 'table':
+        ctx['table_data'] = slide.table_data if slide.table_data else []
+
+    elif hint == 'quote':
+        quote_text, attribution = _parse_quote_from_body(slide.body)
+        ctx['quote_text'] = quote_text
+        ctx['attribution'] = attribution
+
+    elif hint == 'summary':
+        ctx['items'] = _extract_items(slide.body) or slide.items
+
+    elif hint == 'cta':
+        ctx['body_html'] = _markdown_body_to_html(slide.body)
+        ctx['cta_text'] = ''
+        ctx['cta_email'] = ''
+
+    elif hint == 'visual':
+        image_uri, caption = _parse_visual_from_body(slide.body)
+        ctx['image_uri'] = image_uri
+        ctx['caption'] = caption
+
+    elif hint == 'blank':
+        pass  # No content needed
 
     else:
-        # Default to text
+        # Unknown type — fall back to content
         ctx['body_html'] = _markdown_body_to_html(slide.body)
         ctx['callout'] = ''
-        template = env.get_template('authoring/slides/text.html')
-        return template.render(**ctx)
+        template_path = f'{layout.template_dir}/content.html'
+
+    template = env.get_template(template_path)
+    return template.render(**ctx)
 
 
-def generate_deck(slides, theme, collage_data_uri='', deck_title='Untitled Deck'):
+def generate_deck(slides, palette, layout, collage_data_uri='', deck_title='Untitled Deck'):
     """Generate a complete self-contained HTML deck.
 
     Args:
         slides: List of Slide objects from the parser
-        theme: Theme object
+        palette: Palette object from palettes.py
+        layout: Layout object from layouts.py
         collage_data_uri: Base64 data URI for the title slide collage
         deck_title: Title shown in the browser tab
 
@@ -343,29 +466,23 @@ def generate_deck(slides, theme, collage_data_uri='', deck_title='Untitled Deck'
         str: Complete HTML document
     """
     env = _get_jinja_env()
-    meta = theme.to_metadata()
+    palette_meta = palette.to_metadata()
+    layout_meta = layout.to_metadata()
 
     # Render each slide
     slides_html_parts = []
     for i, slide in enumerate(slides):
-        # Alternate dark/light backgrounds (title always dark)
         if slide.is_title_slide:
             dark = True
         else:
-            # Alternate: even index = light, odd = dark (after title)
             dark = (i % 2 == 0)
 
-        slide_html = render_slide(slide, i, theme, collage_data_uri, dark)
+        slide_html = render_slide(slide, i, palette, layout, collage_data_uri, dark)
         slides_html_parts.append(slide_html)
 
     slides_html = '\n'.join(slides_html_parts)
 
     # Make first slide active
-    slides_html = slides_html.replace(
-        'data-slide="0"',
-        'data-slide="0" class="slide active"' if 'class="slide' not in slides_html.split('data-slide="0"')[0].split('\n')[-1] else 'data-slide="0"',
-    )
-    # Actually, let's do it properly
     slides_html = slides_html.replace(
         '<div class="slide s-title',
         '<div class="slide active s-title',
@@ -373,20 +490,80 @@ def generate_deck(slides, theme, collage_data_uri='', deck_title='Untitled Deck'
     )
 
     # Render the deck shell
-    shell_template = env.get_template('authoring/deck_shell.html')
+    shell_template = env.get_template(f'{layout.template_dir}/shell.html')
 
     return shell_template.render(
         deck_title=deck_title,
-        font_import_css=f"@import url('{meta['font_imports']}');",
-        font_body=meta['font_families']['body'],
-        font_headline=meta['font_families']['headline'],
-        color_soil=meta['primary_colors']['soil'],
-        color_apricot=meta['primary_colors']['apricot'],
-        color_arctic=meta['primary_colors']['arctic'],
-        color_stone=meta['secondary_colors']['stone'],
-        bg_dark=meta['background_dark'],
-        bg_light=meta['background_light'],
-        top_bar_gradient=meta['top_bar_gradient'],
+        font_imports=f"@import url('{layout.font_imports}');",
+        font_title=layout.font_title,
+        font_content=layout.font_content,
+        # Palette colors
+        bg_dark=palette.background_dark,
+        bg_light=palette.background_light,
+        accent_primary=palette.accent_primary,
+        accent_secondary=palette.accent_secondary,
+        accent_tertiary=palette.accent_tertiary,
+        text_dark=palette.text_dark,
+        text_light=palette.text_light,
+        text_muted=palette.text_muted,
+        top_bar_gradient=palette.top_bar_gradient,
+        card_border_light=palette.card_border_light,
+        card_border_dark=palette.card_border_dark,
+        card_bg_light=palette.card_bg_light,
+        card_bg_dark=palette.card_bg_dark,
+        section_label_light=palette.section_label_light,
+        section_label_dark=palette.section_label_dark,
+        highlight_light=palette.highlight_light,
+        highlight_dark_gradient=palette.highlight_dark_gradient,
+        # Layout style metadata
+        **layout.style_metadata,
+        # Content
         slides_html=slides_html,
         total_slides=len(slides),
     )
+
+
+def generate_deck_compat(slides, theme, collage_data_uri='', deck_title='Untitled Deck'):
+    """Compatibility shim — accepts a Theme object and converts to Palette + Layout.
+
+    Used by existing routes during the migration period.
+    """
+    from authoring.palettes import ARCTIC_BREEZE
+    from authoring.layouts import EDITORIAL
+    return generate_deck(slides, ARCTIC_BREEZE, EDITORIAL,
+                         collage_data_uri=collage_data_uri,
+                         deck_title=deck_title)
+
+
+# ── Logo SVG helper ──────────────────────────────────────────────────
+
+_LOGO_SVG_TEMPLATE = '''<svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" class="logo-svg">
+  <g transform="translate(20, 10) scale(0.95)">
+    <ellipse cx="85" cy="95" rx="55" ry="65" fill="none" stroke="{logo_stroke}" stroke-width="3.5" transform="rotate(-15, 85, 95)"/>
+    <ellipse cx="75" cy="100" rx="35" ry="50" fill="none" stroke="{wing_color}" stroke-width="2.5" transform="rotate(-10, 75, 100)"/>
+    <ellipse cx="90" cy="90" rx="30" ry="45" fill="none" stroke="{wing_color}" stroke-width="2.5" transform="rotate(-20, 90, 90)"/>
+    <ellipse cx="100" cy="60" rx="28" ry="35" fill="{wing_fill}" opacity="0.6" transform="rotate(-25, 100, 60)"/>
+    <path d="M70 150 Q85 100 100 55 Q102 50 108 52" fill="none" stroke="{logo_stroke}" stroke-width="3" stroke-linecap="round"/>
+    <text x="115" y="72" font-size="10" fill="{logo_stroke}" font-family="sans-serif">TM</text>
+  </g>
+  <text x="195" y="130" font-family="'Quicksand', 'All Round Gothic', sans-serif" font-size="82" font-weight="500" fill="{wordmark_color}" letter-spacing="-1">Synaptiq</text>
+  <text x="648" y="130" font-family="'Quicksand', sans-serif" font-size="18" fill="{wordmark_color}">®</text>
+</svg>'''
+
+
+def _get_logo_svg(dark=False):
+    """Generate Synaptiq logo SVG for dark or light slide backgrounds."""
+    if dark:
+        return _LOGO_SVG_TEMPLATE.format(
+            logo_stroke='#ffffff',
+            wing_color='rgba(255,255,255,0.6)',
+            wing_fill='#F7CFA5',
+            wordmark_color='#ffffff',
+        )
+    else:
+        return _LOGO_SVG_TEMPLATE.format(
+            logo_stroke='#312A29',
+            wing_color='#A1B8CA',
+            wing_fill='#A1B8CA',
+            wordmark_color='#312A29',
+        )
