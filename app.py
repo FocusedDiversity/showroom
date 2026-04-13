@@ -420,7 +420,20 @@ def viewer_deck(token):
         ORDER BY viewed_at DESC LIMIT 1
     ''', (link['id'], viewer_email)).fetchone()
 
-    view_id = view['id'] if view else None
+    if not view:
+        # Create a view if session is valid but no view record exists
+        view = db.execute('''
+            INSERT INTO views (share_link_id, viewer_email, user_agent, ip_address, referrer, is_forwarded)
+            VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
+        ''', (
+            link['id'], viewer_email,
+            request.headers.get('User-Agent', ''),
+            request.remote_addr or '', request.referrer or '',
+            viewer_email != link['recipient_email'],
+        )).fetchone()
+        db.commit()
+
+    view_id = view['id']
 
     return render_template('viewer/deck_view.html',
                            token=token, title=link['title'], view_id=view_id,

@@ -41,12 +41,12 @@
     </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/heartbeat.js') }}"></script>
+<script src="{{ url_for('static', filename='js/heartbeat.js') }}?v=117"></script>
 {% if feedback_enabled %}
-<script src="{{ url_for('static', filename='js/feedback.js') }}"></script>
+<script src="{{ url_for('static', filename='js/feedback.js') }}?v=117"></script>
 {% endif %}
 <script>
-    startHeartbeat({{ view_id }});
-    {% if feedback_enabled %}initFeedback({{ view_id }});{% endif %}
+    startHeartbeat({{ view_id | default(0, true) }});
+    {% if feedback_enabled %}initFeedback({{ view_id | default(0, true) }});{% endif %}
 </script>
 {% endblock %}
