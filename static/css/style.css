@@ -593,6 +593,13 @@ a:hover { text-decoration: underline; }
     font-size: 14px; padding: 0 2px; margin-left: 6px; opacity: 0.5; line-height: 1;
 }
 .feedback-delete-btn:hover { opacity: 1; color: #CC5E58; }
+.feedback-slide-tag {
+    display: inline-block; font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; padding: 2px 7px; border-radius: 4px; margin-bottom: 4px;
+    background: var(--border); color: var(--text-secondary);
+}
+.feedback-slide-tag.is-current { background: #A1B8CA; color: #fff; }
+.feedback-prior-item.is-current-slide { border-left-color: #A1B8CA; }
 
 .feedback-error {
     padding: 8px 16px;

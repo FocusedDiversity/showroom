@@ -139,26 +139,40 @@ function initFeedback(viewId) {
 
     function renderPrior() {
         panelPrior.innerHTML = '';
-        var items = feedbackCache[currentSlide] || [];
 
-        if (items.length === 0) {
+        // Collect all feedback across all slides, sorted by slide number
+        var allSlides = Object.keys(feedbackCache).map(Number).sort(function (a, b) { return a - b; });
+        var totalItems = 0;
+        allSlides.forEach(function (s) { totalItems += feedbackCache[s].length; });
+
+        if (totalItems === 0) {
             var empty = document.createElement('p');
             empty.className = 'feedback-prior-empty';
-            empty.textContent = 'No feedback on this slide yet.';
+            empty.textContent = 'No feedback yet.';
             panelPrior.appendChild(empty);
         } else {
-            items.forEach(function (f) {
-                var div = document.createElement('div');
-                var isOwn = f.is_own !== false;
-                var pendingClass = f._pending ? ' is-pending' : '';
-                div.className = 'feedback-prior-item' + (isOwn ? '' : ' is-other') + pendingClass;
-                var authorLabel = isOwn ? 'You' : escapeHtml(f.viewer_email || '');
-                var deleteBtn = (isOwn && !f._pending && f.id && !String(f.id).startsWith('_temp'))
-                    ? ' <button class="feedback-delete-btn" onclick="event.stopPropagation();" data-id="' + f.id + '" title="Delete">×</button>'
-                    : '';
-                div.innerHTML = '<p class="feedback-prior-text">' + escapeHtml(f.comment) + '</p>' +
-                    '<span class="feedback-prior-time"><strong class="feedback-prior-author">' + authorLabel + '</strong> · ' + timeAgo(f.created_at) + deleteBtn + '</span>';
-                panelPrior.appendChild(div);
+            allSlides.forEach(function (slideNum) {
+                var items = feedbackCache[slideNum];
+                if (!items || items.length === 0) return;
+
+                // Current slide items get highlighted
+                var isCurrent = slideNum === currentSlide;
+
+                items.forEach(function (f) {
+                    var div = document.createElement('div');
+                    var isOwn = f.is_own !== false;
+                    var pendingClass = f._pending ? ' is-pending' : '';
+                    var currentClass = isCurrent ? ' is-current-slide' : '';
+                    div.className = 'feedback-prior-item' + (isOwn ? '' : ' is-other') + pendingClass + currentClass;
+                    var authorLabel = isOwn ? 'You' : escapeHtml(f.viewer_email || '');
+                    var deleteBtn = (isOwn && !f._pending && f.id && !String(f.id).startsWith('_temp'))
+                        ? ' <button class="feedback-delete-btn" onclick="event.stopPropagation();" data-id="' + f.id + '" title="Delete">×</button>'
+                        : '';
+                    var slideTag = '<span class="feedback-slide-tag' + (isCurrent ? ' is-current' : '') + '">Slide ' + slideNum + '</span> ';
+                    div.innerHTML = slideTag + '<p class="feedback-prior-text">' + escapeHtml(f.comment) + '</p>' +
+                        '<span class="feedback-prior-time"><strong class="feedback-prior-author">' + authorLabel + '</strong> · ' + timeAgo(f.created_at) + deleteBtn + '</span>';
+                    panelPrior.appendChild(div);
+                });
             });
             // Attach delete handlers
             panelPrior.querySelectorAll('.feedback-delete-btn').forEach(function (btn) {
