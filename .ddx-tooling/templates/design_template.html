@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{Product/Capability Name} — Design</title>
+  <script src="../.ddx-tooling/tailwind.js"></script>
+  <style>
+    html { scroll-behavior: smooth; }
+    .screen-frame {
+      max-width: 960px;
+      margin: 0 auto 4rem auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 1rem;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    }
+    .screen-frame .screen-topbar {
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .screen-frame .screen-topbar .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .screen-frame .screen-topbar .dot-red { background: #ef4444; }
+    .screen-frame .screen-topbar .dot-yellow { background: #eab308; }
+    .screen-frame .screen-topbar .dot-green { background: #22c55e; }
+    .screen-frame .screen-topbar .screen-title {
+      margin-left: 0.75rem;
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 py-8 mb-12">
+    <div class="max-w-4xl mx-auto px-6">
+      <h1 class="text-3xl font-bold">{Product/Capability Name} — Design</h1>
+      <p class="text-gray-500 mt-2">Visual design document — open in a browser to view</p>
+    </div>
+  </header>
+
+  <!-- Table of Contents -->
+  <nav class="max-w-4xl mx-auto px-6 mb-12">
+    <h2 class="text-lg font-semibold mb-3">Screens</h2>
+    <ol class="list-decimal list-inside space-y-1 text-blue-600">
+      <li><a href="#screen-name" class="hover:underline">{Screen Name}</a></li>
+      <!-- repeat for each screen -->
+    </ol>
+  </nav>
+
+  <!-- Screen: {Screen Name} -->
+  <section id="screen-name" class="mb-16 px-6">
+    <h2 class="max-w-4xl mx-auto text-xl font-semibold mb-4">{Screen Name}</h2>
+
+    <div class="screen-frame">
+      <div class="screen-topbar">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <span class="screen-title">{Screen Name}</span>
+      </div>
+      <div class="bg-white p-6">
+        <!-- Screen content: build the actual UI using Tailwind classes -->
+        <!-- Example: navbar, cards, forms, tables, modals, etc. -->
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="max-w-4xl mx-auto mt-6">
+      <h3 class="font-semibold text-sm text-gray-700 mb-1">Visual</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+        <li>{what the user sees: layout, hierarchy, key elements}</li>
+      </ul>
+      <h3 class="font-semibold text-sm text-gray-700 mt-3 mb-1">Interaction</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+        <li>{what happens: on tap/click/submit, navigation, state changes}</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Repeat <section> block for each screen -->
+
+</body>
+</html>

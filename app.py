@@ -18,6 +18,10 @@ app.teardown_appcontext(close_db)
 
 storage = get_storage()
 
+# Register authoring blueprint
+from authoring.routes import authoring_bp
+app.register_blueprint(authoring_bp)
+
 
 # ── Helpers ──────────────────────────────────────────────────────────
 
@@ -39,6 +43,51 @@ def inject_base_tag(html_content, base_url):
     if pattern.search(html_content):
         return pattern.sub(r'\1' + tag, html_content, count=1)
     return tag + html_content
+
+
+def inject_slide_tracking(html_content):
+    """Inject a script that posts slide changes to the parent window."""
+    tracking_script = '''
+<script>
+(function() {
+  // Detect slide navigation and notify parent
+  var lastSlide = null;
+  function detectSlide() {
+    var slide = null;
+    // Method 1: Look for active slide with data-slide attribute
+    var active = document.querySelector('.slide.active[data-slide]');
+    if (active) { slide = parseInt(active.dataset.slide); }
+    // Method 2: Check for a current/currentSlide variable
+    if (!slide && typeof current !== 'undefined') { slide = current; }
+    // Method 3: Look for slide-indicator text like "3 / 12"
+    if (!slide) {
+      var indicator = document.querySelector('.slide-indicator');
+      if (indicator) {
+        var match = indicator.textContent.match(/(\\d+)\\s*\\/\\s*(\\d+)/);
+        if (match) { slide = parseInt(match[1]); }
+      }
+    }
+    if (slide && slide !== lastSlide) {
+      lastSlide = slide;
+      var total = document.querySelectorAll('.slide[data-slide]').length || null;
+      window.parent.postMessage({type: 'showroom_slide', slide: slide, total: total}, '*');
+    }
+  }
+  // Poll for changes + listen for common navigation events
+  setInterval(detectSlide, 500);
+  document.addEventListener('keydown', function() { setTimeout(detectSlide, 100); });
+  document.addEventListener('click', function() { setTimeout(detectSlide, 100); });
+  // Initial detection
+  setTimeout(detectSlide, 200);
+})();
+</script>'''
+    # Inject before </body> using string replacement (not re.sub, which
+    # would interpret backslashes in the JS as regex escapes)
+    body_close = re.compile(r'</body>', re.IGNORECASE)
+    m = body_close.search(html_content)
+    if m:
+        return html_content[:m.start()] + tracking_script + html_content[m.start():]
+    return html_content + tracking_script
 
 
 # ── Admin Routes ─────────────────────────────────────────────────────
@@ -63,7 +112,15 @@ def admin_dashboard():
         GROUP BY d.id
         ORDER BY d.created_at DESC
     ''').fetchall()
-    return render_template('admin/dashboard.html', decks=decks)
+    # Fetch in-progress authoring sessions
+    authoring_sessions = db.execute(
+        """SELECT * FROM authoring_sessions
+           WHERE status IN ('drafting', 'previewing', 'refining')
+           ORDER BY updated_at DESC"""
+    ).fetchall()
+
+    return render_template('admin/dashboard.html', decks=decks,
+                           authoring_sessions=authoring_sessions)
 
 
 @app.route('/admin/upload', methods=['POST'])
@@ -175,10 +232,12 @@ def admin_create_share(deck_id):
     if not deck:
         abort(404)
 
+    feedback_enabled = request.form.get('feedback_enabled') == 'on'
+
     token = secrets.token_urlsafe(16)
     db.execute(
-        'INSERT INTO share_links (deck_id, recipient_email, token) VALUES (%s, %s, %s)',
-        (deck_id, email, token)
+        'INSERT INTO share_links (deck_id, recipient_email, token, feedback_enabled) VALUES (%s, %s, %s, %s)',
+        (deck_id, email, token, feedback_enabled)
     )
     db.commit()
 
@@ -247,6 +306,17 @@ def admin_analytics_api(deck_id):
         ORDER BY day
     ''', (deck_id,)).fetchall()
 
+    # Feedback
+    feedback = db.execute('''
+        SELECT sf.id, sf.slide_number, sf.comment, sf.created_at,
+               v.viewer_email
+        FROM slide_feedback sf
+        JOIN views v ON v.id = sf.view_id
+        JOIN share_links sl ON sl.id = v.share_link_id
+        WHERE sl.deck_id = %s
+        ORDER BY sf.created_at DESC
+    ''', (deck_id,)).fetchall()
+
     return jsonify({
         'summary': {
             'total_views': summary['total_views'],
@@ -263,8 +333,18 @@ def admin_analytics_api(deck_id):
             'user_agent': v['user_agent'],
             'ip_address': v['ip_address'],
             'is_forwarded': bool(v['is_forwarded']),
+            'current_slide': v['current_slide'],
+            'total_slides': v['total_slides'],
         } for v in views],
         'daily': [{'day': d['day'], 'count': d['count']} for d in daily],
+        'feedback': [{
+            'id': f['id'],
+            'slide_number': f['slide_number'],
+            'viewer_email': f['viewer_email'],
+            'comment': f['comment'],
+            'created_at': f['created_at'].isoformat() if hasattr(f['created_at'], 'isoformat') else f['created_at'],
+        } for f in feedback],
+        'feedback_count': len(feedback),
     })
 
 
@@ -342,7 +422,8 @@ def viewer_deck(token):
     view_id = view['id'] if view else None
 
     return render_template('viewer/deck_view.html',
-                           token=token, title=link['title'], view_id=view_id)
+                           token=token, title=link['title'], view_id=view_id,
+                           feedback_enabled=bool(link['feedback_enabled']))
 
 
 @app.route('/v/<token>/raw')
@@ -369,6 +450,7 @@ def viewer_raw(token):
 
     base_url = url_for('viewer_asset', token=token, path='', _external=False)
     html = inject_base_tag(html, base_url)
+    html = inject_slide_tracking(html)
 
     return html, 200, {'Content-Type': 'text/html; charset=utf-8'}
 
@@ -399,18 +481,161 @@ def heartbeat():
 
     view_id = data.get('view_id')
     duration = data.get('duration')
+    current_slide = data.get('current_slide')
+    total_slides = data.get('total_slides')
 
     if not view_id or duration is None:
         return jsonify({'ok': False}), 400
 
     db = get_db()
     db.execute(
-        'UPDATE views SET duration_seconds = %s WHERE id = %s',
-        (int(duration), int(view_id))
+        'UPDATE views SET duration_seconds = %s, current_slide = %s, total_slides = %s WHERE id = %s',
+        (int(duration), current_slide, total_slides, int(view_id))
     )
     db.commit()
 
     return jsonify({'ok': True})
+
+
+# ── Feedback API ────────────────────────────────────────────────────
+
+@app.route('/api/feedback', methods=['POST'])
+def submit_feedback():
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({'ok': False, 'error': 'Invalid request'}), 400
+
+    view_id = data.get('view_id')
+    slide_number = data.get('slide_number')
+    comment = (data.get('comment') or '').strip()
+
+    if not view_id or not slide_number or not comment:
+        return jsonify({'ok': False, 'error': 'Missing required fields'}), 400
+
+    if len(comment) > 1000:
+        return jsonify({'ok': False, 'error': 'Comment too long (max 1000 chars)'}), 400
+
+    if slide_number < 1:
+        return jsonify({'ok': False, 'error': 'Invalid slide number'}), 400
+
+    db = get_db()
+    view = db.execute('SELECT id, viewer_email, share_link_id FROM views WHERE id = %s', (int(view_id),)).fetchone()
+    if not view:
+        return jsonify({'ok': False, 'error': 'View not found'}), 404
+
+    # Validate session: find the token for this view's share link
+    link = db.execute('SELECT token, feedback_enabled FROM share_links WHERE id = %s', (view['share_link_id'],)).fetchone()
+    if not link:
+        return jsonify({'ok': False, 'error': 'Not authorized'}), 403
+
+    if not link['feedback_enabled']:
+        return jsonify({'ok': False, 'error': 'Feedback is not enabled for this link'}), 403
+
+    session_key = f"viewer_email_{link['token']}"
+    viewer_email = session.get(session_key)
+    if not viewer_email or viewer_email != view['viewer_email']:
+        return jsonify({'ok': False, 'error': 'Not authorized'}), 403
+
+    row = db.execute(
+        'INSERT INTO slide_feedback (view_id, slide_number, comment) VALUES (%s, %s, %s) RETURNING id',
+        (int(view_id), int(slide_number), comment)
+    ).fetchone()
+    db.commit()
+
+    return jsonify({'ok': True, 'feedback_id': row['id']})
+
+
+@app.route('/api/feedback', methods=['GET'])
+def get_feedback():
+    view_id = request.args.get('view_id', type=int)
+    if not view_id:
+        return jsonify({'ok': False, 'error': 'Missing view_id'}), 400
+
+    db = get_db()
+    view = db.execute('SELECT id, viewer_email, share_link_id FROM views WHERE id = %s', (view_id,)).fetchone()
+    if not view:
+        return jsonify({'ok': False, 'error': 'View not found'}), 404
+
+    # Validate session
+    link = db.execute('SELECT token FROM share_links WHERE id = %s', (view['share_link_id'],)).fetchone()
+    if not link:
+        return jsonify({'ok': False, 'error': 'Not authorized'}), 403
+
+    session_key = f"viewer_email_{link['token']}"
+    viewer_email = session.get(session_key)
+    if not viewer_email or viewer_email != view['viewer_email']:
+        return jsonify({'ok': False, 'error': 'Not authorized'}), 403
+
+    feedback = db.execute(
+        'SELECT id, slide_number, comment, created_at FROM slide_feedback WHERE view_id = %s ORDER BY created_at ASC',
+        (view_id,)
+    ).fetchall()
+
+    return jsonify({
+        'ok': True,
+        'feedback': [{
+            'id': f['id'],
+            'slide_number': f['slide_number'],
+            'comment': f['comment'],
+            'created_at': f['created_at'].isoformat() if hasattr(f['created_at'], 'isoformat') else f['created_at'],
+        } for f in feedback]
+    })
+
+
+def obfuscate_email(email):
+    """Obfuscate email: s***@acme.com"""
+    if not email or '@' not in email:
+        return '***'
+    local, domain = email.split('@', 1)
+    return local[0] + '***@' + domain if local else '***@' + domain
+
+
+@app.route('/api/feedback/all', methods=['GET'])
+def get_all_feedback():
+    view_id = request.args.get('view_id', type=int)
+    if not view_id:
+        return jsonify({'ok': False, 'error': 'Missing view_id'}), 400
+
+    db = get_db()
+    view = db.execute('SELECT id, viewer_email, share_link_id FROM views WHERE id = %s', (view_id,)).fetchone()
+    if not view:
+        return jsonify({'ok': False, 'error': 'View not found'}), 404
+
+    # Validate session
+    link = db.execute('SELECT token, deck_id, feedback_enabled FROM share_links WHERE id = %s', (view['share_link_id'],)).fetchone()
+    if not link:
+        return jsonify({'ok': False, 'error': 'Not authorized'}), 403
+
+    if not link['feedback_enabled']:
+        return jsonify({'ok': False, 'error': 'Feedback is not enabled for this link'}), 403
+
+    session_key = f"viewer_email_{link['token']}"
+    viewer_email = session.get(session_key)
+    if not viewer_email:
+        return jsonify({'ok': False, 'error': 'Not authorized'}), 403
+
+    # Get ALL feedback for this deck
+    feedback = db.execute('''
+        SELECT sf.id, sf.slide_number, sf.comment, sf.created_at,
+               v.viewer_email
+        FROM slide_feedback sf
+        JOIN views v ON v.id = sf.view_id
+        JOIN share_links sl ON sl.id = v.share_link_id
+        WHERE sl.deck_id = %s
+        ORDER BY sf.created_at ASC
+    ''', (link['deck_id'],)).fetchall()
+
+    return jsonify({
+        'ok': True,
+        'feedback': [{
+            'id': f['id'],
+            'slide_number': f['slide_number'],
+            'comment': f['comment'],
+            'viewer_email': 'You' if f['viewer_email'] == viewer_email else obfuscate_email(f['viewer_email']),
+            'is_own': f['viewer_email'] == viewer_email,
+            'created_at': f['created_at'].isoformat() if hasattr(f['created_at'], 'isoformat') else f['created_at'],
+        } for f in feedback],
+    })
 
 
 # ── Init DB on import (for gunicorn) ─────────────────────────────────

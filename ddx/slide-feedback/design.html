@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slide Feedback — Design</title>
+  <script src="../../.ddx-tooling/tailwind.js"></script>
+  <style>
+    html { scroll-behavior: smooth; }
+    .screen-frame {
+      max-width: 960px;
+      margin: 0 auto 4rem auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 1rem;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    }
+    .screen-frame .screen-topbar {
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .screen-frame .screen-topbar .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .screen-frame .screen-topbar .dot-red { background: #ef4444; }
+    .screen-frame .screen-topbar .dot-yellow { background: #eab308; }
+    .screen-frame .screen-topbar .dot-green { background: #22c55e; }
+    .screen-frame .screen-topbar .screen-title {
+      margin-left: 0.75rem;
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+    .bg-soil { background-color: #312A29; }
+    .text-soil { color: #312A29; }
+    .bg-fog { background-color: #E2E1E3; }
+    .bg-arctic { background-color: #A1B8CA; }
+    .text-arctic { color: #A1B8CA; }
+    .bg-apricot { background-color: #F7CFA5; }
+    .bg-coconut { background-color: #FFFDF9; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 py-8 mb-12">
+    <div class="max-w-4xl mx-auto px-6">
+      <h1 class="text-3xl font-bold">Slide Feedback — Design</h1>
+      <p class="text-gray-500 mt-2">Visual design document for the slide feedback capability</p>
+    </div>
+  </header>
+
+  <!-- Table of Contents -->
+  <nav class="max-w-4xl mx-auto px-6 mb-12">
+    <h2 class="text-lg font-semibold mb-3">Screens</h2>
+    <ol class="list-decimal list-inside space-y-1 text-blue-600">
+      <li><a href="#viewer-feedback-collapsed" class="hover:underline">Deck Viewer — Feedback Toggle (Collapsed)</a></li>
+      <li><a href="#viewer-feedback-open" class="hover:underline">Deck Viewer — Feedback Panel (Open)</a></li>
+      <li><a href="#viewer-feedback-submitted" class="hover:underline">Deck Viewer — Feedback Submitted</a></li>
+      <li><a href="#viewer-feedback-prior" class="hover:underline">Deck Viewer — Prior Feedback on Slide</a></li>
+      <li><a href="#analytics-feedback-tab" class="hover:underline">Analytics — Feedback Tab</a></li>
+      <li><a href="#analytics-feedback-empty" class="hover:underline">Analytics — Feedback Tab (Empty State)</a></li>
+    </ol>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- Screen 1: Viewer — Feedback Toggle Collapsed -->
+  <!-- ============================================================ -->
+  <section id="viewer-feedback-collapsed" class="mb-16 px-6">
+    <h2 class="max-w-4xl mx-auto text-xl font-semibold mb-4">1. Deck Viewer — Feedback Toggle (Collapsed)</h2>
+
+    <div class="screen-frame">
+      <div class="screen-topbar">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <span class="screen-title">Deck Viewer</span>
+      </div>
+      <div class="bg-white" style="height: 540px; display: flex; flex-direction: column;">
+        <!-- Viewer topbar -->
+        <div class="bg-fog flex items-center justify-between px-4 border-b border-gray-300" style="height: 50px; min-height: 50px;">
+          <span class="text-soil text-sm font-medium">AI Solutions Overview</span>
+          <span class="bg-white text-gray-600 text-xs px-3 py-1 rounded-full border border-gray-300">3 / 12</span>
+          <div class="flex items-center gap-3">
+            <button class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 bg-white border border-gray-300 rounded-full px-3 py-1 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              Feedback
+            </button>
+            <span class="text-soil text-xs font-medium tracking-wide">SYNAPTIQ</span>
+          </div>
+        </div>
+        <!-- Iframe area — full width when panel is closed -->
+        <div class="flex-1 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+          <div class="text-center">
+            <div class="text-6xl mb-3 opacity-30">&#9654;</div>
+            <span>Slide deck content renders here (full width)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="max-w-4xl mx-auto mt-6">
+      <h3 class="font-semibold text-sm text-gray-700 mb-1">Visual</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+        <li>Small "Feedback" pill button added to the topbar, right side, before the Synaptiq logo</li>
+        <li>Chat bubble icon + "Feedback" label — unobtrusive, doesn't compete with slide content</li>
+        <li>When collapsed, the iframe takes the full width of the viewport — no panel visible</li>
+      </ul>
+      <h3 class="font-semibold text-sm text-gray-700 mt-3 mb-1">Interaction</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+        <li>Clicking the Feedback button opens the right-side feedback panel (see next screen)</li>
+        <li>Button is always visible regardless of which slide is active</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- Screen 2: Viewer — Feedback Panel Open (Right Side) -->
+  <!-- ============================================================ -->
+  <section id="viewer-feedback-open" class="mb-16 px-6">
+    <h2 class="max-w-4xl mx-auto text-xl font-semibold mb-4">2. Deck Viewer — Feedback Panel (Open)</h2>
+
+    <div class="screen-frame">
+      <div class="screen-topbar">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <span class="screen-title">Deck Viewer — Feedback Open</span>
+      </div>
+      <div class="bg-white" style="height: 540px; display: flex; flex-direction: column;">
+        <!-- Viewer topbar -->
+        <div class="bg-fog flex items-center justify-between px-4 border-b border-gray-300" style="height: 50px; min-height: 50px;">
+          <span class="text-soil text-sm font-medium">AI Solutions Overview</span>
+          <span class="bg-white text-gray-600 text-xs px-3 py-1 rounded-full border border-gray-300">3 / 12</span>
+          <div class="flex items-center gap-3">
+            <button class="flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-3 py-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              Feedback
+            </button>
+            <span class="text-soil text-xs font-medium tracking-wide">SYNAPTIQ</span>
+          </div>
+        </div>
+        <!-- Content area: iframe + right side panel -->
+        <div class="flex-1 flex">
+          <!-- Iframe area — shrinks to make room for panel -->
+          <div class="flex-1 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+            <div class="text-center">
+              <div class="text-6xl mb-3 opacity-30">&#9654;</div>
+              <span>Slide deck content</span>
+            </div>
+          </div>
+          <!-- Right-side feedback panel (320px wide) -->
+          <div class="bg-white border-l border-gray-200 flex flex-col" style="width: 320px; min-width: 320px;">
+            <!-- Panel header -->
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Feedback for Slide 3</span>
+              <button class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+            </div>
+            <!-- Prior feedback area (scrollable) -->
+            <div class="flex-1 overflow-y-auto px-4 py-3">
+              <p class="text-xs text-gray-400 italic">No feedback on this slide yet.</p>
+            </div>
+            <!-- Input area pinned to bottom -->
+            <div class="border-t border-gray-100 px-4 py-3">
+              <div class="flex gap-2">
+                <input type="text" placeholder="Share your thoughts on this slide..." class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400" />
+                <button class="bg-soil text-white text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition whitespace-nowrap">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="max-w-4xl mx-auto mt-6">
+      <h3 class="font-semibold text-sm text-gray-700 mb-1">Visual</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+        <li>Feedback panel is a 320px-wide right sidebar, separated from the iframe by a left border</li>
+        <li>Panel has three zones: header (slide label + close), scrollable middle (prior comments), and input pinned to bottom</li>
+        <li>Iframe shrinks horizontally to make room — the slide content is never covered or obscured</li>
+        <li>"Feedback for Slide N" label updates dynamically as the viewer navigates slides</li>
+        <li>Topbar Feedback button switches to active state (blue highlight) when panel is open</li>
+      </ul>
+      <h3 class="font-semibold text-sm text-gray-700 mt-3 mb-1">Interaction</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+        <li>Slide number in the label updates automatically when the viewer navigates to a different slide</li>
+        <li>Pressing Enter or clicking Send submits the feedback</li>
+        <li>Clicking X or the Feedback button again closes the panel and iframe returns to full width</li>
+        <li>Input is focused automatically when the panel opens</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- Screen 3: Viewer — Feedback Submitted -->
+  <!-- ============================================================ -->
+  <section id="viewer-feedback-submitted" class="mb-16 px-6">
+    <h2 class="max-w-4xl mx-auto text-xl font-semibold mb-4">3. Deck Viewer — Feedback Submitted</h2>
+
+    <div class="screen-frame">
+      <div class="screen-topbar">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <span class="screen-title">Deck Viewer — Feedback Submitted</span>
+      </div>
+      <div class="bg-white" style="height: 540px; display: flex; flex-direction: column;">
+        <!-- Viewer topbar -->
+        <div class="bg-fog flex items-center justify-between px-4 border-b border-gray-300" style="height: 50px; min-height: 50px;">
+          <span class="text-soil text-sm font-medium">AI Solutions Overview</span>
+          <span class="bg-white text-gray-600 text-xs px-3 py-1 rounded-full border border-gray-300">3 / 12</span>
+          <div class="flex items-center gap-3">
+            <button class="flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-3 py-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              Feedback
+            </button>
+            <span class="text-soil text-xs font-medium tracking-wide">SYNAPTIQ</span>
+          </div>
+        </div>
+        <!-- Content area with confirmation in right panel -->
+        <div class="flex-1 flex">
+          <div class="flex-1 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+            <div class="text-center">
+              <div class="text-6xl mb-3 opacity-30">&#9654;</div>
+              <span>Slide deck content</span>
+            </div>
+          </div>
+          <!-- Right panel with confirmation -->
+          <div class="bg-white border-l border-gray-200 flex flex-col" style="width: 320px; min-width: 320px;">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Feedback for Slide 3</span>
+              <button class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+            </div>
+            <div class="flex-1 flex items-center justify-center px-4">
+              <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span class="text-sm text-gray-700">Thanks for your feedback on Slide 3!</span>
+              </div>
+            </div>
+            <div class="border-t border-gray-100 px-4 py-3">
+              <div class="flex gap-2">
+                <input type="text" placeholder="Share your thoughts on this slide..." class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                <button class="bg-soil text-white text-sm font-medium px-4 py-2 rounded-lg whitespace-nowrap">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="max-w-4xl mx-auto mt-6">
+      <h3 class="font-semibold text-sm text-gray-700 mb-1">Visual</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+        <li>Confirmation message with green checkmark appears in the center of the right panel</li>
+        <li>Input area remains at the bottom for additional comments</li>
+      </ul>
+      <h3 class="font-semibold text-sm text-gray-700 mt-3 mb-1">Interaction</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+        <li>Confirmation auto-dismisses after 3 seconds</li>
+        <li>Viewer can immediately type and submit another comment</li>
+        <li>Panel stays open — no need to reopen after submitting</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- Screen 4: Viewer — Prior Feedback on Slide -->
+  <!-- ============================================================ -->
+  <section id="viewer-feedback-prior" class="mb-16 px-6">
+    <h2 class="max-w-4xl mx-auto text-xl font-semibold mb-4">4. Deck Viewer — Prior Feedback on Slide</h2>
+
+    <div class="screen-frame">
+      <div class="screen-topbar">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <span class="screen-title">Deck Viewer — Prior Feedback</span>
+      </div>
+      <div class="bg-white" style="height: 540px; display: flex; flex-direction: column;">
+        <!-- Viewer topbar -->
+        <div class="bg-fog flex items-center justify-between px-4 border-b border-gray-300" style="height: 50px; min-height: 50px;">
+          <span class="text-soil text-sm font-medium">AI Solutions Overview</span>
+          <span class="bg-white text-gray-600 text-xs px-3 py-1 rounded-full border border-gray-300">3 / 12</span>
+          <div class="flex items-center gap-3">
+            <button class="flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-3 py-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              Feedback
+            </button>
+            <span class="text-soil text-xs font-medium tracking-wide">SYNAPTIQ</span>
+          </div>
+        </div>
+        <!-- Content with prior feedback in right panel -->
+        <div class="flex-1 flex">
+          <div class="flex-1 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+            <div class="text-center">
+              <div class="text-6xl mb-3 opacity-30">&#9654;</div>
+              <span>Slide deck content</span>
+            </div>
+          </div>
+          <!-- Right panel with prior comments -->
+          <div class="bg-white border-l border-gray-200 flex flex-col" style="width: 320px; min-width: 320px;">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Feedback for Slide 3</span>
+              <button class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+            </div>
+            <!-- Prior comments (scrollable) -->
+            <div class="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+              <div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
+                <p class="text-sm text-gray-700">This ROI breakdown is really compelling — can you share the source data?</p>
+                <span class="text-xs text-gray-400 mt-1 block">You, 2 min ago</span>
+              </div>
+              <div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
+                <p class="text-sm text-gray-700">The 40% figure seems conservative based on our experience.</p>
+                <span class="text-xs text-gray-400 mt-1 block">You, just now</span>
+              </div>
+            </div>
+            <!-- Input pinned to bottom -->
+            <div class="border-t border-gray-100 px-4 py-3">
+              <div class="flex gap-2">
+                <input type="text" placeholder="Add another comment..." class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400" />
+                <button class="bg-soil text-white text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition whitespace-nowrap">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="max-w-4xl mx-auto mt-6">
+      <h3 class="font-semibold text-sm text-gray-700 mb-1">Visual</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+        <li>Prior comments listed in the scrollable middle area of the right panel</li>
+        <li>Each comment in a light gray card with timestamp</li>
+        <li>More vertical room for comments than a bottom panel — can show several without scrolling</li>
+        <li>Input placeholder changes to "Add another comment..."</li>
+      </ul>
+      <h3 class="font-semibold text-sm text-gray-700 mt-3 mb-1">Interaction</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+        <li>Viewer can submit multiple comments per slide — each is stored separately</li>
+        <li>Prior comments are read-only (no editing or deleting in v1)</li>
+        <li>Panel scrolls vertically if there are many prior comments — input stays pinned at bottom</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- Screen 5: Analytics — Feedback Tab -->
+  <!-- ============================================================ -->
+  <section id="analytics-feedback-tab" class="mb-16 px-6">
+    <h2 class="max-w-4xl mx-auto text-xl font-semibold mb-4">5. Analytics — Feedback Tab</h2>
+
+    <div class="screen-frame">
+      <div class="screen-topbar">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <span class="screen-title">Analytics — Feedback</span>
+      </div>
+      <div class="bg-white p-0">
+        <div class="bg-soil text-white px-6 py-3 flex items-center gap-6">
+          <span class="font-bold text-sm tracking-wide">SHOWROOM</span>
+          <a class="text-gray-300 text-sm hover:text-white">Decks</a>
+        </div>
+        <div class="px-6 py-6" style="max-width: 960px;">
+          <div class="text-sm text-blue-600 mb-2">&larr; AI Solutions Overview</div>
+          <h1 class="text-2xl font-bold text-gray-900 mb-6">Analytics: AI Solutions Overview</h1>
+          <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="bg-white border border-gray-200 rounded-lg p-4 text-center">
+              <div class="text-3xl font-bold text-gray-900">47</div>
+              <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">Total Views</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-lg p-4 text-center">
+              <div class="text-3xl font-bold text-gray-900">18</div>
+              <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">Unique Viewers</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-lg p-4 text-center">
+              <div class="text-3xl font-bold text-gray-900">4:32</div>
+              <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">Avg. Time</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-lg p-4 text-center">
+              <div class="text-3xl font-bold text-blue-600">12</div>
+              <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">Feedback Items</div>
+            </div>
+          </div>
+          <div class="border-b border-gray-200 mb-6">
+            <nav class="flex gap-6">
+              <a class="text-sm text-gray-500 pb-2 hover:text-gray-700">Views</a>
+              <a class="text-sm font-medium text-soil pb-2 border-b-2 border-soil">Feedback</a>
+            </nav>
+          </div>
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-sm text-gray-500">Filter by slide:</span>
+            <select class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white">
+              <option>All slides</option>
+              <option selected>Slide 3</option>
+            </select>
+            <span class="text-sm text-gray-500 ml-4">Filter by viewer:</span>
+            <select class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white">
+              <option selected>All viewers</option>
+            </select>
+          </div>
+          <div class="border border-gray-200 rounded-lg overflow-hidden">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="text-left px-4 py-3 text-xs text-gray-500 uppercase tracking-wide font-medium">Slide</th>
+                  <th class="text-left px-4 py-3 text-xs text-gray-500 uppercase tracking-wide font-medium">Viewer</th>
+                  <th class="text-left px-4 py-3 text-xs text-gray-500 uppercase tracking-wide font-medium">Feedback</th>
+                  <th class="text-left px-4 py-3 text-xs text-gray-500 uppercase tracking-wide font-medium">Date</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr>
+                  <td class="px-4 py-3"><span class="inline-flex items-center justify-center w-7 h-7 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">3</span></td>
+                  <td class="px-4 py-3 text-gray-700">sarah@acme.com</td>
+                  <td class="px-4 py-3 text-gray-900">This ROI breakdown is really compelling — can you share the source data?</td>
+                  <td class="px-4 py-3 text-gray-500 whitespace-nowrap">Mar 28, 2026</td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3"><span class="inline-flex items-center justify-center w-7 h-7 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">3</span></td>
+                  <td class="px-4 py-3 text-gray-700">mike@techcorp.io</td>
+                  <td class="px-4 py-3 text-gray-900">How does this compare to industry benchmarks?</td>
+                  <td class="px-4 py-3 text-gray-500 whitespace-nowrap">Mar 27, 2026</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="max-w-4xl mx-auto mt-6">
+      <h3 class="font-semibold text-sm text-gray-700 mb-1">Visual</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+        <li>Analytics page unchanged from previous design — only the viewer panel layout changed</li>
+      </ul>
+      <h3 class="font-semibold text-sm text-gray-700 mt-3 mb-1">Interaction</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+        <li>Same tab switching and filtering behavior as before</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- Screen 6: Analytics — Feedback Empty State -->
+  <!-- ============================================================ -->
+  <section id="analytics-feedback-empty" class="mb-16 px-6">
+    <h2 class="max-w-4xl mx-auto text-xl font-semibold mb-4">6. Analytics — Feedback Tab (Empty State)</h2>
+
+    <div class="screen-frame">
+      <div class="screen-topbar">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <span class="screen-title">Analytics — Feedback (Empty)</span>
+      </div>
+      <div class="bg-white p-0">
+        <div class="bg-soil text-white px-6 py-3 flex items-center gap-6">
+          <span class="font-bold text-sm tracking-wide">SHOWROOM</span>
+          <a class="text-gray-300 text-sm hover:text-white">Decks</a>
+        </div>
+        <div class="px-6 py-6" style="max-width: 960px;">
+          <div class="text-sm text-blue-600 mb-2">&larr; Q1 Partner Update</div>
+          <h1 class="text-2xl font-bold text-gray-900 mb-6">Analytics: Q1 Partner Update</h1>
+          <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="bg-white border border-gray-200 rounded-lg p-4 text-center">
+              <div class="text-3xl font-bold text-gray-900">8</div>
+              <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">Total Views</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-lg p-4 text-center">
+              <div class="text-3xl font-bold text-gray-900">5</div>
+              <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">Unique Viewers</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-lg p-4 text-center">
+              <div class="text-3xl font-bold text-gray-900">2:10</div>
+              <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">Avg. Time</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-lg p-4 text-center">
+              <div class="text-3xl font-bold text-gray-400">0</div>
+              <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">Feedback Items</div>
+            </div>
+          </div>
+          <div class="border-b border-gray-200 mb-6">
+            <nav class="flex gap-6">
+              <a class="text-sm text-gray-500 pb-2 hover:text-gray-700">Views</a>
+              <a class="text-sm font-medium text-soil pb-2 border-b-2 border-soil">Feedback</a>
+            </nav>
+          </div>
+          <div class="text-center py-16">
+            <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            <p class="text-gray-500 text-sm">No feedback submitted yet for this deck.</p>
+            <p class="text-gray-400 text-xs mt-1">Feedback will appear here as viewers leave comments on individual slides.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="max-w-4xl mx-auto mt-6">
+      <h3 class="font-semibold text-sm text-gray-700 mb-1">Visual</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+        <li>Same empty state as before — analytics screens are not affected by this design change</li>
+      </ul>
+    </div>
+  </section>
+
+</body>
+</html>

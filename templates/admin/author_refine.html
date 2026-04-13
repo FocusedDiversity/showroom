@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Refine Deck - {{ session.title }} - Showroom{% endblock %}
+
+{% block head %}
+<style>
+.refine-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-top: 24px; align-items: start; }
+.refine-header { display: flex; justify-content: space-between; align-items: center; }
+.refine-header h1 { font-size: 24px; }
+.revision-badge {
+    background: #f0f0f0; padding: 6px 14px; border-radius: 20px;
+    font-size: 13px; font-weight: 600; color: #666;
+}
+.preview-frame {
+    width: 100%; height: 450px; border: 2px solid #eee;
+    border-radius: 12px; background: #000;
+}
+.authoring-feedback { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 24px; }
+.authoring-feedback h3 { font-size: 16px; margin-bottom: 16px; }
+.feedback-textarea {
+    width: 100%; min-height: 120px; padding: 12px; border: 1px solid #ddd;
+    border-radius: 8px; font-family: inherit; font-size: 14px; resize: vertical;
+    margin-bottom: 12px;
+}
+.feedback-textarea:focus { outline: none; border-color: #A1B8CA; box-shadow: 0 0 0 3px rgba(161,184,202,0.15); }
+.quick-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.quick-btn {
+    padding: 6px 14px; border: 1px solid #ddd; border-radius: 20px;
+    background: #fff; font-size: 12px; cursor: pointer; font-family: inherit;
+}
+.quick-btn:hover { background: #f5f5f5; border-color: #A1B8CA; }
+.btn { padding: 10px 20px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-block; }
+.btn-primary { background: #312A29; color: #fff; }
+.btn-primary:hover { background: #4a4140; }
+.btn-secondary { background: #f0f0f0; color: #333; }
+.btn-secondary:hover { background: #e0e0e0; }
+.btn-success { background: #1D6E6F; color: #fff; }
+.btn-success:hover { background: #256d6e; }
+.action-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.feedback-history { margin-top: 24px; }
+.feedback-history h4 { font-size: 14px; color: #888; margin-bottom: 8px; }
+.feedback-item {
+    padding: 10px 14px; background: #f9f9f9; border-radius: 8px;
+    font-size: 13px; margin-bottom: 8px; border-left: 3px solid #A1B8CA;
+}
+.feedback-item .rev { font-weight: 600; color: #A1B8CA; }
+
+/* Publish modal */
+.modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 1000; justify-content: center; align-items: center;
+}
+.modal-overlay.active { display: flex; }
+.modal-box {
+    background: #fff; border-radius: 16px; padding: 32px; width: 480px;
+    max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modal-box h2 { font-size: 20px; margin-bottom: 20px; }
+.modal-box .form-group { margin-bottom: 16px; }
+.modal-box .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+.modal-box .form-group input, .modal-box .form-group textarea {
+    width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px;
+    font-family: inherit; font-size: 14px;
+}
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="refine-header">
+    <div>
+        <h1>{{ session.title }}</h1>
+        <span class="revision-badge">Revision {{ feedback_history|length + 1 }}</span>
+    </div>
+    <div style="display:flex; gap:8px;">
+        <a href="{{ url_for('authoring.view_variant', session_id=session.id, variant_id=variant.id) }}"
+           target="_blank" class="btn btn-secondary">Open Full Preview</a>
+        <button class="btn btn-success" onclick="document.getElementById('publishModal').classList.add('active')">
+            Publish to Showroom
+        </button>
+    </div>
+</div>
+
+<div class="refine-layout">
+    <!-- Left: Preview -->
+    <div>
+        <iframe class="preview-frame"
+                src="{{ url_for('authoring.view_variant', session_id=session.id, variant_id=variant.id) }}"
+                sandbox="allow-scripts allow-same-origin"></iframe>
+    </div>
+
+    <!-- Right: Feedback -->
+    <div class="authoring-feedback">
+        <h3>Refine This Deck</h3>
+
+        <form method="POST" action="{{ url_for('authoring.apply_feedback', session_id=session.id) }}">
+            <div class="quick-actions">
+                <button type="button" class="quick-btn" onclick="addFeedback('Adjust the accent colors — use more apricot tones')">Adjust colors</button>
+                <button type="button" class="quick-btn" onclick="addFeedback('Change the slide layouts to use more card-based designs')">Change layout</button>
+                <button type="button" class="quick-btn" onclick="addFeedback('Modify the title slide — adjust the collage positioning')">Modify title</button>
+                <button type="button" class="quick-btn" onclick="addFeedback('Make the text larger and more readable')">Larger text</button>
+            </div>
+
+            <textarea name="feedback_text" id="feedbackText" class="feedback-textarea"
+                      placeholder="Describe what you'd like to change..."></textarea>
+
+            <div class="action-row">
+                <button type="submit" class="btn btn-primary">Apply Changes</button>
+                <a href="{{ url_for('authoring.preview_variants', session_id=session.id) }}" class="btn btn-secondary">Back to Variants</a>
+            </div>
+        </form>
+
+        {% if feedback_history %}
+        <div class="feedback-history">
+            <h4>Feedback History</h4>
+            {% for fb in feedback_history %}
+            <div class="feedback-item">
+                <span class="rev">Rev {{ fb.revision_number }}:</span>
+                {{ fb.feedback_text }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Publish Modal -->
+<div class="modal-overlay" id="publishModal">
+    <div class="modal-box">
+        <h2>Publish to Showroom</h2>
+        <form method="POST" action="{{ url_for('authoring.publish_deck', session_id=session.id) }}">
+            <div class="form-group">
+                <label for="pub_title">Deck Title</label>
+                <input type="text" id="pub_title" name="title" value="{{ session.title }}">
+            </div>
+            <div class="form-group">
+                <label for="pub_desc">Description (optional)</label>
+                <textarea id="pub_desc" name="description" rows="3" placeholder="Brief description of this deck..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="this.closest('.modal-overlay').classList.remove('active')">Cancel</button>
+                <button type="submit" class="btn btn-success">Publish</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function addFeedback(text) {
+    var ta = document.getElementById('feedbackText');
+    if (ta.value) ta.value += '\n';
+    ta.value += text;
+    ta.focus();
+}
+
+// Close modal on overlay click
+document.getElementById('publishModal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('active');
+});
+</script>
+{% endblock %}

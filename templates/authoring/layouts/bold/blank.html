@@ -1,0 +1,9 @@
+{# Blank slide — empty with only top bar and page number #}
+<div class="slide s-blank {% if dark %}dark{% else %}light{% endif %}" data-slide="{{ slide_index }}">
+  <div class="top-bar"></div>
+  <div class="inner">
+  </div>
+  <div class="bot">
+    <span class="page-num{% if dark %}-dark{% endif %}">{{ slide_index + 1 }}</span>
+  </div>
+</div>

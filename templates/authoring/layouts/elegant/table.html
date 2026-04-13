@@ -1,0 +1,37 @@
+{# Table slide — styled HTML table #}
+<div class="slide s-table {% if dark %}dark{% else %}light{% endif %}" data-slide="{{ slide_index }}">
+  <div class="top-bar"></div>
+  {% if not dark %}
+  <div class="left-accent"></div>
+  {% else %}
+  <div class="glow"></div>
+  {% endif %}
+  <div class="inner">
+    {% if section_label %}
+    <div class="section-label">{{ section_label }}</div>
+    {% endif %}
+    <h1>{{ title | safe }}</h1>
+    <div class="table-container">
+      <table>
+        {% for row in table_data %}
+        {% if loop.first %}
+        <thead>
+          <tr>
+            {% for cell in row %}<th>{{ cell }}</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+        {% else %}
+          <tr>
+            {% for cell in row %}<td>{{ cell }}</td>{% endfor %}
+          </tr>
+        {% endif %}
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="bot">
+      <span class="page-num{% if dark %}-dark{% endif %}">{{ slide_index + 1 }}</span>
+    </div>
+  </div>
+</div>

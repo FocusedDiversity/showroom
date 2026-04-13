@@ -1,0 +1,26 @@
+{# Summary / key takeaway slide — numbered takeaways in large text #}
+<div class="slide s-summary {% if dark %}dark{% else %}light{% endif %}" data-slide="{{ slide_index }}">
+  <div class="top-bar"></div>
+  {% if not dark %}
+  <div class="left-accent"></div>
+  {% else %}
+  <div class="glow"></div>
+  {% endif %}
+  <div class="inner">
+    {% if section_label %}
+    <div class="section-label">{{ section_label }}</div>
+    {% endif %}
+    <h1>{{ title | safe }}</h1>
+    <div class="takeaways">
+      {% for item in items %}
+      <div class="takeaway">
+        <span class="takeaway-num">{{ loop.index }}</span>
+        <span class="takeaway-text">{{ item }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="bot">
+      <span class="page-num{% if dark %}-dark{% endif %}">{{ slide_index + 1 }}</span>
+    </div>
+  </div>
+</div>

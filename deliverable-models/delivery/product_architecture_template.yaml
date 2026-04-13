@@ -1,0 +1,33 @@
+product_architecture_walkthrough: executive_summary: what_this_is: ""
+why_it_matters: "" impact: - ""
+
+problem_and_opportunity: current_state: - "" opportunity: - ""
+
+solution_overview: proposed_solution: "" core_capabilities: - "" - "" -
+"" differentiation: - ""
+
+user_and_business_flow: primary_flow: - step: 1 description: "" - step:
+2 description: "" edge_cases: - ""
+
+architecture: overview: \| \[Client / User\] ↓ \[API / Gateway\] ↓
+\[Core Services\] ↓ \[Data / Storage\] components: client_layer: ""
+backend_services: "" data_layer: "" integrations: ""
+
+technical_decisions: - decision: "" choice: "" why: "" tradeoffs: ""
+
+scalability_and_performance: expected_scale: "" scaling_approach: ""
+bottlenecks_and_mitigations: - ""
+
+risks_and_mitigations: technical: - risk: "" mitigation: "" product: -
+risk: "" mitigation: "" operational: - risk: "" mitigation: ""
+
+security_and_compliance: auth_model: "" data_sensitivity: "" compliance:
+""
+
+roadmap: phase_1: scope: "" timeline: "" phase_2: - "" future: - ""
+
+success_metrics: business: - "" technical: - ""
+
+decisions_needed: - "" - "" investment_required: ""
+
+appendix: diagrams: "" api_specs: "" data_models: ""

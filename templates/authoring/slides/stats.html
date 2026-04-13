@@ -1,0 +1,30 @@
+{# Stats slide — key metrics with large numbers #}
+<div class="slide s-stats {% if dark %}dark{% else %}light{% endif %}" data-slide="{{ slide_index }}">
+  <div class="top-bar"></div>
+  {% if dark %}
+  <div class="glow glow-1"></div>
+  <div class="glow glow-2"></div>
+  {% else %}
+  <div class="left-accent"></div>
+  {% endif %}
+  <div class="inner">
+    {% if section_label %}
+    <div class="section-label">{{ section_label }}</div>
+    {% endif %}
+    <h1>{{ title | safe }}</h1>
+    <div class="stats-grid">
+      {% for stat in stats %}
+      <div class="stat-card">
+        <div class="stat-value">{{ stat.value }}</div>
+        <div class="stat-label">{{ stat.label }}</div>
+        {% if stat.description %}
+        <div class="stat-desc">{{ stat.description }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="bot">
+      <span class="page-num{% if dark %}-dark{% endif %}">{{ slide_index + 1 }}</span>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,20 @@
+# Synaptiq Discovery Session Template
+# Used for initial discovery sessions with prospects
+
+metadata:
+  title: Discovery Session
+  description: Template for structuring discovery session findings and recommendations
+
+sections:
+  - name: Current State
+    description: Describe the client's current situation, systems, and processes.
+  - name: Pain Points
+    description: Key challenges and problems identified during discovery.
+  - name: Opportunities
+    description: Areas where AI/ML solutions could drive measurable impact.
+  - name: Proposed Approach
+    description: High-level recommended approach and methodology.
+  - name: Success Criteria
+    description: How we will measure success for this engagement.
+  - name: Next Steps
+    description: Recommended immediate actions and timeline.

@@ -1,0 +1,58 @@
+# DDX Configuration
+# Defines document types, templates, prompts, and dependencies
+
+documents:
+  mandate:
+    name: "Mandate"
+    prompt: ".ddx-tooling/prompts/mandate_prompt.md"
+    template: ".ddx-tooling/templates/mandate_template.md"
+    output: "ddx/MANDATE.md"
+    upstream: []
+    downstream: []
+
+  definition:
+    name: "Definition"
+    prompt: ".ddx-tooling/prompts/definition_prompt.md"
+    template: ".ddx-tooling/templates/definition_template.md"
+    output: "ddx/{scope}/definition.md"
+    upstream: []
+    downstream: ["design"]
+
+  design:
+    name: "Design"
+    mode: "html"   # "ascii" or "html"
+    prompt: ".ddx-tooling/prompts/design_prompt.md"
+    template: ".ddx-tooling/templates/design_template.md"
+    output: "ddx/{scope}/design.md"
+    html_prompt: ".ddx-tooling/prompts/design_prompt_html.md"
+    html_template: ".ddx-tooling/templates/design_template.html"
+    html_output: "ddx/{scope}/design.html"
+    upstream: ["definition"]
+    downstream: ["spec"]
+
+  spec:
+    name: "Spec"
+    prompt: ".ddx-tooling/prompts/spec_prompt.md"
+    template: ".ddx-tooling/templates/spec_template.md"
+    output: "ddx/{scope}/spec.md"
+    upstream: ["definition", "design"]
+    downstream: ["plan"]
+
+  plan:
+    name: "Plan"
+    prompt: ".ddx-tooling/prompts/plan_prompt.md"
+    template: ".ddx-tooling/templates/plan_template.md"
+    output: "ddx/{scope}/plan.md"
+    upstream: ["definition", "design", "spec"]
+    downstream: []
+
+# LLM Configuration
+llm:
+  model: "claude-sonnet-4-20250514"
+  max_tokens: 4096
+  temperature: 1.0
+
+# Workflow Configuration
+workflow:
+  state_dir: ".ddx-tooling/.state"
+  state_file: ".ddx-tooling/.state/state.json"

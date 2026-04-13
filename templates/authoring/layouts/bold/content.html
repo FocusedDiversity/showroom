@@ -1,0 +1,24 @@
+{# Content / detail slide — section header or text-heavy content #}
+<div class="slide s-text {% if dark %}dark{% else %}light{% endif %}" data-slide="{{ slide_index }}">
+  <div class="top-bar"></div>
+  {% if not dark %}
+  <div class="left-accent"></div>
+  {% else %}
+  <div class="glow"></div>
+  {% endif %}
+  <div class="inner">
+    {% if section_label %}
+    <div class="section-label">{{ section_label }}</div>
+    {% endif %}
+    <h1>{{ title | safe }}</h1>
+    <div class="body-content">
+      {{ body_html | safe }}
+    </div>
+    <div class="bot">
+      {% if callout %}
+      <div class="callout">{{ callout }}</div>
+      {% endif %}
+      <span class="page-num{% if dark %}-dark{% endif %}">{{ slide_index + 1 }}</span>
+    </div>
+  </div>
+</div>

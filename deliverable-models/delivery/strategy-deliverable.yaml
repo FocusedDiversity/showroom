@@ -1,0 +1,24 @@
+# Synaptiq Strategy Deliverable Template
+# Used for final AI/data strategy deliverables to clients
+
+metadata:
+  title: AI Strategy Deliverable
+  description: Template for structuring comprehensive AI/data strategy deliverables
+
+sections:
+  - name: Executive Summary
+    description: Strategic overview and key recommendations for leadership.
+  - name: Current State Assessment
+    description: Analysis of existing data infrastructure, capabilities, and maturity.
+  - name: Vision & Target State
+    description: The desired future state and how AI/ML will drive the organization forward.
+  - name: Strategic Recommendations
+    description: Prioritized recommendations with rationale and expected impact.
+  - name: Implementation Roadmap
+    description: Phased plan with timelines, dependencies, and resource requirements.
+  - name: Investment Analysis
+    description: Cost-benefit analysis and ROI projections for recommended initiatives.
+  - name: Governance Framework
+    description: Data governance, ethics, and compliance recommendations.
+  - name: Success Metrics
+    description: KPIs and measurement framework to track progress.

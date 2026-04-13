@@ -1,0 +1,22 @@
+# Synaptiq Progress Report Template
+# Used for regular client progress updates during engagements
+
+metadata:
+  title: Progress Report
+  description: Template for structuring engagement progress updates
+
+sections:
+  - name: Executive Summary
+    description: One-paragraph status overview for stakeholders.
+  - name: Accomplishments
+    description: Key deliverables completed since the last report.
+  - name: Key Metrics
+    description: Quantitative progress indicators and benchmarks.
+  - name: In Progress
+    description: Current work items and their status.
+  - name: Risks & Issues
+    description: Active risks, blockers, and mitigation strategies.
+  - name: Upcoming Milestones
+    description: What's planned for the next reporting period.
+  - name: Decisions Needed
+    description: Items requiring client input or approval.

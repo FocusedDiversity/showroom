@@ -5,16 +5,48 @@
 <div class="viewer-frame-page">
     <div class="viewer-topbar">
         <span class="viewer-topbar-title">{{ title }}</span>
-        <span class="viewer-topbar-brand">
+        <span class="viewer-topbar-slide" id="slide-indicator"></span>
+        <span class="viewer-topbar-right">
+            {% if feedback_enabled %}
+            <button class="feedback-toggle-btn" id="feedback-toggle" title="Leave feedback">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg>
+                Feedback
+            </button>
+            {% endif %}
             <img src="{{ url_for('static', filename='img/synaptiq-logo-color.svg') }}" alt="Synaptiq" class="topbar-logo">
         </span>
     </div>
-    <iframe id="deck-frame" src="{{ url_for('viewer_raw', token=token) }}"
-            class="deck-iframe" frameborder="0"></iframe>
+    <div class="viewer-content">
+        <iframe id="deck-frame" src="{{ url_for('viewer_raw', token=token) }}"
+                class="deck-iframe" frameborder="0"></iframe>
+
+        {% if feedback_enabled %}
+        <!-- Feedback panel -->
+        <div class="feedback-panel" id="feedback-panel">
+            <div class="feedback-panel-header">
+                <span class="feedback-slide-label" id="feedback-slide-label">Feedback</span>
+                <button class="feedback-panel-close" id="feedback-close">&times;</button>
+            </div>
+            <div class="feedback-prior" id="feedback-prior"></div>
+            <div class="feedback-input-row">
+                <input type="text" id="feedback-input" class="feedback-input" placeholder="Share your thoughts on this slide..." maxlength="1000">
+                <button class="feedback-send-btn" id="feedback-send">Send</button>
+            </div>
+            <div class="feedback-confirm" id="feedback-confirm" style="display:none;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--success); flex-shrink:0;"><path d="M5 13l4 4L19 7"/></svg>
+                <span class="feedback-confirm-text">Thanks for your feedback!</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
 </div>
 
 <script src="{{ url_for('static', filename='js/heartbeat.js') }}"></script>
+{% if feedback_enabled %}
+<script src="{{ url_for('static', filename='js/feedback.js') }}"></script>
+{% endif %}
 <script>
     startHeartbeat({{ view_id }});
+    {% if feedback_enabled %}initFeedback({{ view_id }});{% endif %}
 </script>
 {% endblock %}

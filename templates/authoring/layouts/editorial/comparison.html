@@ -1,0 +1,28 @@
+{# Comparison slide — side-by-side columns #}
+<div class="slide s-comparison {% if dark %}dark{% else %}light{% endif %}" data-slide="{{ slide_index }}">
+  <div class="top-bar"></div>
+  {% if not dark %}
+  <div class="left-accent"></div>
+  {% else %}
+  <div class="glow"></div>
+  {% endif %}
+  <div class="inner">
+    {% if section_label %}
+    <div class="section-label">{{ section_label }}</div>
+    {% endif %}
+    <h1>{{ title | safe }}</h1>
+    <div class="comparison-columns">
+      {% for col in columns %}
+      <div class="comparison-col">
+        {% if col.title %}
+        <h2>{{ col.title }}</h2>
+        {% endif %}
+        <div class="col-body">{{ col.body_html | safe }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="bot">
+      <span class="page-num{% if dark %}-dark{% endif %}">{{ slide_index + 1 }}</span>
+    </div>
+  </div>
+</div>

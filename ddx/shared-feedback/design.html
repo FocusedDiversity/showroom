@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shared Feedback — Design</title>
+  <script src="../../.ddx-tooling/tailwind.js"></script>
+  <style>
+    html { scroll-behavior: smooth; }
+    .screen-frame {
+      max-width: 960px;
+      margin: 0 auto 4rem auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 1rem;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    }
+    .screen-frame .screen-topbar {
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .screen-frame .screen-topbar .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .screen-frame .screen-topbar .dot-red { background: #ef4444; }
+    .screen-frame .screen-topbar .dot-yellow { background: #eab308; }
+    .screen-frame .screen-topbar .dot-green { background: #22c55e; }
+    .screen-frame .screen-topbar .screen-title {
+      margin-left: 0.75rem;
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+    .bg-soil { background-color: #312A29; }
+    .text-soil { color: #312A29; }
+    .bg-fog { background-color: #E2E1E3; }
+    .bg-arctic { background-color: #A1B8CA; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+
+  <header class="bg-white border-b border-gray-200 py-8 mb-12">
+    <div class="max-w-4xl mx-auto px-6">
+      <h1 class="text-3xl font-bold">Shared Feedback — Design</h1>
+      <p class="text-gray-500 mt-2">Visual design for showing all viewers' feedback in the panel</p>
+    </div>
+  </header>
+
+  <nav class="max-w-4xl mx-auto px-6 mb-12">
+    <h2 class="text-lg font-semibold mb-3">Screens</h2>
+    <ol class="list-decimal list-inside space-y-1 text-blue-600">
+      <li><a href="#mixed-feedback" class="hover:underline">Feedback Panel — Mixed Own + Others' Comments</a></li>
+      <li><a href="#others-only" class="hover:underline">Feedback Panel — Only Others' Comments (No Own Yet)</a></li>
+    </ol>
+  </nav>
+
+  <!-- Screen 1: Mixed own + others -->
+  <section id="mixed-feedback" class="mb-16 px-6">
+    <h2 class="max-w-4xl mx-auto text-xl font-semibold mb-4">1. Feedback Panel — Mixed Own + Others' Comments</h2>
+
+    <div class="screen-frame">
+      <div class="screen-topbar">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <span class="screen-title">Deck Viewer — Shared Feedback</span>
+      </div>
+      <div class="bg-white" style="height: 540px; display: flex; flex-direction: column;">
+        <!-- Viewer topbar -->
+        <div class="bg-fog flex items-center justify-between px-4 border-b border-gray-300" style="height: 50px; min-height: 50px;">
+          <span class="text-soil text-sm font-medium">AI Solutions Overview</span>
+          <span class="bg-white text-gray-600 text-xs px-3 py-1 rounded-full border border-gray-300">3 / 12</span>
+          <div class="flex items-center gap-3">
+            <button class="flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-3 py-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              Feedback
+            </button>
+            <span class="text-soil text-xs font-medium tracking-wide">SYNAPTIQ</span>
+          </div>
+        </div>
+        <!-- Content area -->
+        <div class="flex-1 flex">
+          <div class="flex-1 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+            <div class="text-center">
+              <div class="text-6xl mb-3 opacity-30">&#9654;</div>
+              <span>Slide deck content</span>
+            </div>
+          </div>
+          <!-- Right panel with mixed feedback -->
+          <div class="bg-white border-l border-gray-200 flex flex-col" style="width: 320px; min-width: 320px;">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Feedback for Slide 3</span>
+              <button class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+            </div>
+            <!-- Mixed comments (scrollable) -->
+            <div class="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+              <!-- Other viewer's comment — white bg, left accent border -->
+              <div class="bg-white rounded-lg px-3 py-2 border border-gray-100 border-l-4" style="border-left-color: #A1B8CA;">
+                <p class="text-sm text-gray-700">This ROI breakdown is really compelling — can you share the source data?</p>
+                <span class="text-xs text-gray-400 mt-1 block"><strong class="text-gray-500 font-medium">s***@acme.com</strong> · 2 hours ago</span>
+              </div>
+              <!-- Own comment — gray bg, "You" label -->
+              <div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
+                <p class="text-sm text-gray-700">The 40% figure seems conservative based on our experience.</p>
+                <span class="text-xs text-gray-400 mt-1 block"><strong class="text-gray-500 font-medium">You</strong> · 30 min ago</span>
+              </div>
+              <!-- Another other viewer -->
+              <div class="bg-white rounded-lg px-3 py-2 border border-gray-100 border-l-4" style="border-left-color: #A1B8CA;">
+                <p class="text-sm text-gray-700">How does this compare to industry benchmarks?</p>
+                <span class="text-xs text-gray-400 mt-1 block"><strong class="text-gray-500 font-medium">m***@techcorp.io</strong> · 1 day ago</span>
+              </div>
+            </div>
+            <!-- Input pinned to bottom -->
+            <div class="border-t border-gray-100 px-4 py-3">
+              <div class="flex gap-2">
+                <input type="text" placeholder="Add another comment..." class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                <button class="bg-soil text-white text-sm font-medium px-4 py-2 rounded-lg whitespace-nowrap">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto mt-6">
+      <h3 class="font-semibold text-sm text-gray-700 mb-1">Visual</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+        <li>Own comments: gray background (`bg-gray-50`), labeled "You"</li>
+        <li>Others' comments: white background with a left accent border in arctic blue (#A1B8CA)</li>
+        <li>Author line: bold obfuscated email or "You", followed by · and relative timestamp</li>
+        <li>Comments are interleaved chronologically — not separated into own/other sections</li>
+      </ul>
+      <h3 class="font-semibold text-sm text-gray-700 mt-3 mb-1">Interaction</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+        <li>All feedback for this slide loads when the panel opens or slide changes</li>
+        <li>New submissions from the current viewer appear immediately in the list</li>
+        <li>Others' new comments appear on next load (no real-time push)</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Screen 2: Others only -->
+  <section id="others-only" class="mb-16 px-6">
+    <h2 class="max-w-4xl mx-auto text-xl font-semibold mb-4">2. Feedback Panel — Only Others' Comments (No Own Yet)</h2>
+
+    <div class="screen-frame">
+      <div class="screen-topbar">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <span class="screen-title">Deck Viewer — Others' Feedback</span>
+      </div>
+      <div class="bg-white" style="height: 540px; display: flex; flex-direction: column;">
+        <div class="bg-fog flex items-center justify-between px-4 border-b border-gray-300" style="height: 50px; min-height: 50px;">
+          <span class="text-soil text-sm font-medium">AI Solutions Overview</span>
+          <span class="bg-white text-gray-600 text-xs px-3 py-1 rounded-full border border-gray-300">3 / 12</span>
+          <div class="flex items-center gap-3">
+            <button class="flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-3 py-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              Feedback
+            </button>
+            <span class="text-soil text-xs font-medium tracking-wide">SYNAPTIQ</span>
+          </div>
+        </div>
+        <div class="flex-1 flex">
+          <div class="flex-1 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+            <div class="text-center">
+              <div class="text-6xl mb-3 opacity-30">&#9654;</div>
+              <span>Slide deck content</span>
+            </div>
+          </div>
+          <div class="bg-white border-l border-gray-200 flex flex-col" style="width: 320px; min-width: 320px;">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Feedback for Slide 3</span>
+              <button class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+            </div>
+            <div class="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+              <div class="bg-white rounded-lg px-3 py-2 border border-gray-100 border-l-4" style="border-left-color: #A1B8CA;">
+                <p class="text-sm text-gray-700">This ROI breakdown is really compelling — can you share the source data?</p>
+                <span class="text-xs text-gray-400 mt-1 block"><strong class="text-gray-500 font-medium">s***@acme.com</strong> · 2 hours ago</span>
+              </div>
+              <div class="bg-white rounded-lg px-3 py-2 border border-gray-100 border-l-4" style="border-left-color: #A1B8CA;">
+                <p class="text-sm text-gray-700">How does this compare to industry benchmarks?</p>
+                <span class="text-xs text-gray-400 mt-1 block"><strong class="text-gray-500 font-medium">m***@techcorp.io</strong> · 1 day ago</span>
+              </div>
+            </div>
+            <div class="border-t border-gray-100 px-4 py-3">
+              <div class="flex gap-2">
+                <input type="text" placeholder="Share your thoughts on this slide..." class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                <button class="bg-soil text-white text-sm font-medium px-4 py-2 rounded-lg whitespace-nowrap">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto mt-6">
+      <h3 class="font-semibold text-sm text-gray-700 mb-1">Visual</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+        <li>When the viewer hasn't submitted their own feedback yet, they still see others' comments</li>
+        <li>The placeholder text remains "Share your thoughts on this slide..." since they haven't commented</li>
+      </ul>
+      <h3 class="font-semibold text-sm text-gray-700 mt-3 mb-1">Interaction</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+        <li>Others' comments encourage the viewer to leave their own feedback</li>
+        <li>After submitting, their comment appears in the list with the "You" label</li>
+      </ul>
+    </div>
+  </section>
+
+</body>
+</html>

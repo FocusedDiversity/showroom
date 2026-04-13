@@ -4,10 +4,35 @@
 {% block content %}
 <div class="page-header">
     <h1>Your Decks</h1>
-    <button class="btn btn-primary" onclick="document.getElementById('upload-modal').classList.add('active')">
-        + Upload Deck
-    </button>
+    <div style="display:flex; gap:8px;">
+        <a href="{{ url_for('authoring.author_form') }}" class="btn btn-primary">+ Create New Deck</a>
+        <button class="btn btn-secondary" onclick="document.getElementById('upload-modal').classList.add('active')">
+            Upload HTML
+        </button>
+    </div>
 </div>
+
+{% if authoring_sessions %}
+<div style="margin-bottom:32px;">
+    <h2 style="font-size:18px; margin-bottom:12px;">In-Progress Decks</h2>
+    <div class="deck-grid">
+        {% for s in authoring_sessions %}
+        <div class="deck-card">
+            <div class="deck-card-header">
+                <h3><a href="{% if s.status == 'previewing' %}{{ url_for('authoring.preview_variants', session_id=s.id) }}{% elif s.status == 'refining' %}{{ url_for('authoring.refine_view', session_id=s.id) }}{% else %}{{ url_for('authoring.author_form') }}{% endif %}">{{ s.title }}</a></h3>
+                <span class="badge" style="background:rgba(161,184,202,0.15); color:#A1B8CA; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600;">{{ s.status | title }}</span>
+            </div>
+            {% if s.model_name %}
+            <p class="deck-description">Model: {{ s.model_name }}</p>
+            {% endif %}
+            <div class="deck-meta">
+                Started {{ s.created_at.strftime('%Y-%m-%d') }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 
 {% if decks %}
 <div class="deck-grid">

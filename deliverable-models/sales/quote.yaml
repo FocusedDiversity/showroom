@@ -1,0 +1,219 @@
+# Synaptiq Quote Template
+# Extracted from: Quote Template - 2025.xlsx
+
+quote:
+  buyer:
+    name: ""
+    email: ""
+    job_title: ""
+    company: ""
+
+  project_title: ""
+  last_updated_date: ""
+
+  business_problem:
+    ""
+    # Describe the problem the client is trying to solve including the audience,
+    # pain the client will incur if they do not solve the problem,
+    # how common the problem is, etc.
+
+  use_case:
+    ""
+    # Explain the use case of the ideal solution to solve this problem
+    # that starts with "As a [actor], I will..."
+
+  service:
+    ""
+    # Select from service_catalog below
+
+  measurable_business_results:
+    # Enumerate a list of business results expected
+    - ""
+
+  acceptance_criteria:
+    # Enumerate a list of criteria required to meet the client's expectations
+    - ""
+
+  assumptions:
+    # Enumerate a list of assumptions required for the project to be successful
+    - ""
+
+  proposed_schedule:
+    # Name and map each task to the week(s) it spans
+    tasks:
+      - name: "Example Task 1"
+        weeks: []
+      - name: "Example Task 2"
+        weeks: []
+    total_weeks: 4
+
+  calculated_price:
+    # Select one or more items from service_catalog below and specify the
+    # period (number of months) for each. The total quote price is the sum
+    # of (unit_price × period) for all selected line items.
+    line_items:
+      - sku: ""
+        period_months: 1
+    total: ""
+
+  commission_payout: ""
+
+  quote_validity_days: 30
+  backlog_period: "2 - 4 weeks"
+  note: >
+    Once the quote is approved, Synaptiq will initiate the contract process.
+    When the contract is fully executed and the initial payment is received,
+    Synaptiq will assign resources and schedule a kick-off call when they
+    are available to start work.
+
+# ---------------------------------------------------------------------------
+# Service Catalog — valid values for quote.service (from HubSpot export)
+# ---------------------------------------------------------------------------
+service_catalog:
+  enterprise_strategy:
+    - name: "Enterprise AI Readiness & Strategy"
+      sku: "9734114"
+      unit_price: 1275235.00
+      unit_cost: 637617.50
+    - name: "Enterprise AI Readiness Assessment"
+      sku: "653419"
+      unit_price: 622558.00
+    - name: "Enterprise AI Maturity Plan"
+      sku: "6527111"
+      unit_price: 340946.00
+    - name: "Enterprise AI Support Plan"
+      sku: "6526112"
+      unit_price: 118333.00
+    - name: "Enterprise AI Roadmap"
+      sku: "6521113"
+      unit_price: 97303.00
+      billing_frequency: "Monthly"
+    - name: "Enterprise AI Base Strategy Development"
+      sku: "6539110"
+      unit_price: 96095.00
+
+  rapid_ai_readiness_strategy:
+    - name: "Rapid AI Readiness & Strategy - Large"
+      sku: "973738"
+      unit_price: 188819.00
+      unit_cost: 94409.50
+    - name: "Rapid AI Readiness & Strategy - Medium"
+      sku: "973837"
+      unit_price: 101506.00
+      unit_cost: 50753.00
+    - name: "Rapid AI Readiness & Strategy - Small"
+      sku: "973736"
+      unit_price: 69130.00
+      unit_cost: 34565.00
+
+  ai_solution_retainers:
+    - name: "AI Solution Retainer - XXXLARGE"
+      sku: "6531530"
+      term: "P1M"
+      unit_price: 652337.00
+      billing_frequency: "Monthly"
+      description: "Per month for 20.3 FTEs; includes AI Solution Accelerators (minimum 6 months)"
+    - name: "AI Solution Retainer - XXLARGE"
+      sku: "6530529"
+      term: "P1M"
+      unit_price: 382625.00
+      billing_frequency: "Monthly"
+      description: "Per month for 11.8 FTEs; includes AI Solution Accelerators (minimum 6 months)"
+    - name: "AI Solution Retainer - XLARGE"
+      sku: "6529528"
+      term: "P1M"
+      unit_price: 237250.00
+      billing_frequency: "Monthly"
+      description: "Per month for 7.1 FTEs; includes AI Solution Accelerators (minimum 6 months)"
+    - name: "AI Solution Retainer - Large"
+      sku: "6528527"
+      term: "P1M"
+      unit_price: 143173.00
+      unit_cost: 76587.00
+      billing_frequency: "Monthly"
+      description: "Per month for 4.1 FTEs; includes AI Solution Accelerators (minimum 3 months)"
+    - name: "AI Solution Retainer - Medium"
+      sku: "6529526"
+      term: "P1M"
+      unit_price: 95870.00
+      unit_cost: 51935.00
+      billing_frequency: "Monthly"
+      description: "Per month for 2.8 FTEs; includes AI Solution Accelerators (minimum 3 months)"
+    - name: "AI Solution Retainer - Small"
+      sku: "6528525"
+      term: "P1M"
+      unit_price: 47774.00
+      unit_cost: 26887.00
+      billing_frequency: "Monthly"
+      description: "Per month for 1.5 FTEs; includes AI Solution Accelerators (minimum 3 months)"
+    - name: "AI Solutions Retainer - XSMALL"
+      sku: "6529525"
+      term: "P1M"
+      unit_price: 18349.00
+
+  continuous_improvement_optimization:
+    - name: "Continuous Improvement and Optimization - Large"
+      sku: "6547234"
+      term: "P1M"
+      unit_price: 143173.00
+      billing_frequency: "Monthly"
+      description: "Per month for 4.1 FTEs; includes AI Solution Accelerators (minimum 3 months)"
+    - name: "Continuous Improvement and Optimization - Medium"
+      sku: "6548233"
+      term: "P1M"
+      unit_price: 95870.00
+      billing_frequency: "Monthly"
+      description: "Per month for 2.8 FTEs; includes AI Solution Accelerators (minimum 3 months)"
+    - name: "Continuous Improvement and Optimization - Small"
+      sku: "6547232"
+      term: "P1M"
+      unit_price: 47774.00
+      billing_frequency: "Monthly"
+      description: "Per month for 1.5 FTEs; includes AI Solution Accelerators (minimum 3 months)"
+
+  additional_enterprise_departments:
+    - name: "20 Additional Enterprise Departments"
+      sku: "6536018"
+      unit_price: 3742488.00
+    - name: "10 Additional Enterprise Departments"
+      sku: "6536017"
+      unit_price: 1871244.00
+    - name: "5 Additional Enterprise Departments"
+      sku: "6535016"
+      unit_price: 935622.00
+    - name: "Additional Enterprise Department"
+      sku: "6532015"
+      unit_price: 187124.00
+
+  workshops_education:
+    - name: "4 x 1-Day Art of the Possible Workshops"
+      sku: "6539222"
+      unit_price: 81134.00
+    - name: "1/2 Day AI Executive Education"
+      sku: "6530224"
+      unit_price: 17583.00
+    - name: "1/2 Day AI Innovator Education"
+      sku: "6530223"
+      unit_price: 17124.00
+
+  assessments_analysis:
+    - name: "1 Month Exploratory Data Analysis"
+      sku: "6532019"
+      unit_price: 119654.00
+    - name: "IT Skills Audit - 20 Recipients"
+      sku: "6531220"
+      unit_price: 34812.00
+    - name: "10 Additional AI Assessment Recipients"
+      sku: "6538021"
+      unit_price: 9000.00
+
+  support_other:
+    - name: "On Call Maintenance and Support"
+      sku: "6531031"
+      term: "P1M"
+      billing_frequency: "Monthly"
+      description: "Price determined based on agreed-upon SLAs"
+    - name: "Lite"
+      sku: "65425"
+      unit_price: 0.00
+      billing_frequency: "Monthly"

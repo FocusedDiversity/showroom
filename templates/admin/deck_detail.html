@@ -36,6 +36,9 @@
     <h2>Share Links</h2>
     <form action="{{ url_for('admin_create_share', deck_id=deck.id) }}" method="post" class="inline-form">
         <input type="email" name="email" required placeholder="prospect@company.com" class="input-inline">
+        <label style="display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--text-secondary);cursor:pointer;">
+            <input type="checkbox" name="feedback_enabled" checked> Feedback
+        </label>
         <button type="submit" class="btn btn-primary">Create Link</button>
     </form>
 
@@ -46,6 +49,7 @@
                 <th>Recipient</th>
                 <th>Link</th>
                 <th>Views</th>
+                <th>Feedback</th>
                 <th>Status</th>
                 <th>Created</th>
                 <th>Actions</th>
@@ -62,6 +66,11 @@
                     </div>
                 </td>
                 <td>{{ link.view_count }}</td>
+                <td>
+                    <span class="badge {{ 'badge-active' if link.feedback_enabled else 'badge-inactive' }}">
+                        {{ 'On' if link.feedback_enabled else 'Off' }}
+                    </span>
+                </td>
                 <td>
                     <span class="badge {{ 'badge-active' if link.is_active else 'badge-inactive' }}">
                         {{ 'Active' if link.is_active else 'Disabled' }}

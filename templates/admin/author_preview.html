@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Preview Deck - {{ session.title }} - Showroom{% endblock %}
+
+{% block head %}
+<style>
+.preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.preview-header h1 { font-size: 24px; }
+.preview-meta { font-size: 13px; color: #888; margin-top: 4px; }
+.preview-meta span { display: inline-block; background: #f0f0f0; padding: 3px 10px; border-radius: 12px; margin-right: 6px; font-weight: 500; }
+.preview-frame-container {
+    background: #000; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+}
+.preview-frame {
+    width: 100%; height: 520px; border: none; background: #000;
+}
+.preview-actions { display: flex; gap: 12px; margin-top: 24px; justify-content: space-between; align-items: center; }
+.preview-actions-left { display: flex; gap: 8px; }
+.preview-actions-right { display: flex; gap: 8px; }
+.btn { padding: 10px 20px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-block; text-align: center; }
+.btn-primary { background: #312A29; color: #fff; }
+.btn-primary:hover { background: #4a4140; }
+.btn-secondary { background: #f0f0f0; color: #333; }
+.btn-secondary:hover { background: #e0e0e0; }
+.btn-success { background: #1D6E6F; color: #fff; }
+.btn-success:hover { background: #256d6e; }
+
+/* Publish modal */
+.modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 1000; justify-content: center; align-items: center;
+}
+.modal-overlay.active { display: flex; }
+.modal-box {
+    background: #fff; border-radius: 16px; padding: 32px; width: 480px;
+    max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modal-box h2 { font-size: 20px; margin-bottom: 20px; }
+.modal-box .form-group { margin-bottom: 16px; }
+.modal-box .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+.modal-box .form-group input, .modal-box .form-group textarea {
+    width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px;
+    font-family: inherit; font-size: 14px;
+}
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="preview-header">
+    <div>
+        <h1>{{ session.title }}</h1>
+        <div class="preview-meta">
+            <span>{{ palette_name }}</span>
+            <span>{{ font_name }}</span>
+            <span>{{ layout_name }}</span>
+        </div>
+    </div>
+    <div style="display:flex; gap:8px;">
+        <a href="{{ url_for('authoring.view_variant', session_id=session.id, variant_id=variant.id) }}"
+           target="_blank" class="btn btn-secondary">Open Full Screen</a>
+    </div>
+</div>
+
+<div class="preview-frame-container">
+    <iframe class="preview-frame"
+            src="{{ url_for('authoring.view_variant', session_id=session.id, variant_id=variant.id) }}"
+            sandbox="allow-scripts allow-same-origin"></iframe>
+</div>
+
+<div class="preview-actions">
+    <div class="preview-actions-left">
+        <a href="{{ url_for('authoring.author_form') }}" class="btn btn-secondary">← Change Design</a>
+        <a href="{{ url_for('authoring.refine_view', session_id=session.id) }}" class="btn btn-primary">Refine</a>
+    </div>
+    <div class="preview-actions-right">
+        <button class="btn btn-success" onclick="document.getElementById('publishModal').classList.add('active')">
+            Publish to Showroom
+        </button>
+    </div>
+</div>
+
+<!-- Publish Modal -->
+<div class="modal-overlay" id="publishModal">
+    <div class="modal-box">
+        <h2>Publish to Showroom</h2>
+        <form method="POST" action="{{ url_for('authoring.publish_deck', session_id=session.id) }}">
+            <div class="form-group">
+                <label for="pub_title">Deck Title</label>
+                <input type="text" id="pub_title" name="title" value="{{ session.title }}">
+            </div>
+            <div class="form-group">
+                <label for="pub_desc">Description (optional)</label>
+                <textarea id="pub_desc" name="description" rows="3" placeholder="Brief description of this deck..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="this.closest('.modal-overlay').classList.remove('active')">Cancel</button>
+                <button type="submit" class="btn btn-success">Publish</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('publishModal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('active');
+});
+</script>
+{% endblock %}

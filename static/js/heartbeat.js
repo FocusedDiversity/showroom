@@ -1,11 +1,29 @@
 function startHeartbeat(viewId) {
     if (!viewId) return;
 
-    let startTime = Date.now();
-    let elapsed = 0;
-    let paused = false;
-    let pauseStart = 0;
-    let totalPaused = 0;
+    var startTime = Date.now();
+    var elapsed = 0;
+    var paused = false;
+    var pauseStart = 0;
+    var totalPaused = 0;
+    var currentSlide = null;
+    var totalSlides = null;
+    var slideHistory = [];
+
+    // Listen for slide change messages from the iframe
+    var slideIndicator = document.getElementById('slide-indicator');
+    window.addEventListener('message', function (e) {
+        if (e.data && e.data.type === 'showroom_slide') {
+            currentSlide = e.data.slide;
+            totalSlides = e.data.total || totalSlides;
+            slideHistory.push({ slide: currentSlide, time: getElapsed() });
+            // Update topbar indicator
+            if (slideIndicator) {
+                slideIndicator.textContent = 'Slide ' + currentSlide + (totalSlides ? ' of ' + totalSlides : '');
+                slideIndicator.classList.add('visible');
+            }
+        }
+    });
 
     // Pause timer when tab is hidden
     document.addEventListener('visibilitychange', function () {
@@ -27,6 +45,17 @@ function startHeartbeat(viewId) {
         return Math.round((Date.now() - startTime - totalPaused) / 1000);
     }
 
+    function buildPayload() {
+        var payload = { view_id: viewId, duration: elapsed };
+        if (currentSlide !== null) {
+            payload.current_slide = currentSlide;
+        }
+        if (totalSlides !== null) {
+            payload.total_slides = totalSlides;
+        }
+        return payload;
+    }
+
     function sendPing() {
         elapsed = getElapsed();
         if (elapsed <= 0) return;
@@ -34,7 +63,7 @@ function startHeartbeat(viewId) {
         fetch('/api/heartbeat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ view_id: viewId, duration: elapsed }),
+            body: JSON.stringify(buildPayload()),
         }).catch(function () { /* silent */ });
     }
 
@@ -48,7 +77,7 @@ function startHeartbeat(viewId) {
             navigator.sendBeacon(
                 '/api/heartbeat',
                 new Blob(
-                    [JSON.stringify({ view_id: viewId, duration: elapsed })],
+                    [JSON.stringify(buildPayload())],
                     { type: 'application/json' }
                 )
             );

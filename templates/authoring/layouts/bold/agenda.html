@@ -1,0 +1,26 @@
+{# Agenda / roadmap slide — numbered items with section labels #}
+<div class="slide s-agenda {% if dark %}dark{% else %}light{% endif %}" data-slide="{{ slide_index }}">
+  <div class="top-bar"></div>
+  {% if not dark %}
+  <div class="left-accent"></div>
+  {% else %}
+  <div class="glow"></div>
+  {% endif %}
+  <div class="inner">
+    {% if section_label %}
+    <div class="section-label">{{ section_label }}</div>
+    {% endif %}
+    <h1>{{ title | safe }}</h1>
+    <div class="agenda-items">
+      {% for item in items %}
+      <div class="agenda-item">
+        <div class="agenda-num">{{ loop.index }}</div>
+        <div class="agenda-label">{{ item }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="bot">
+      <span class="page-num{% if dark %}-dark{% endif %}">{{ slide_index + 1 }}</span>
+    </div>
+  </div>
+</div>
