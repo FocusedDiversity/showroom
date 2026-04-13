@@ -50,34 +50,29 @@ def inject_slide_tracking(html_content):
     tracking_script = '''
 <script>
 (function() {
-  // Detect slide navigation and notify parent (1-based slide numbers)
   var lastSlide = null;
   function detectSlide() {
     var slide = null;
-    // Method 1: Look for active slide with data-slide attribute (0-based → convert to 1-based)
+    // Method 1: Active slide with data-slide attribute (0-based → 1-based)
     var active = document.querySelector('.slide.active[data-slide]');
     if (active) { slide = parseInt(active.dataset.slide) + 1; }
-    // Method 2: Check for a current/currentSlide variable
-    if (!slide && typeof current !== 'undefined') { slide = current + 1; }
-    // Method 3: Look for slide-indicator or slideNum text like "3 / 12"
+    // Method 2: Parse "N / M" from slide indicator text
     if (!slide) {
-      var indicator = document.querySelector('.slide-indicator') || document.getElementById('slideNum');
-      if (indicator) {
-        var match = indicator.textContent.match(/(\\d+)\\s*\\/\\s*(\\d+)/);
-        if (match) { slide = parseInt(match[1]); }
+      var el = document.getElementById('slideNum') || document.querySelector('.slide-indicator');
+      if (el) {
+        var m = el.textContent.match(/(\\d+)\\s*\\/\\s*(\\d+)/);
+        if (m) { slide = parseInt(m[1]); }
       }
     }
-    if (slide && slide !== lastSlide) {
+    if (typeof slide === 'number' && slide > 0 && slide !== lastSlide) {
       lastSlide = slide;
-      var total = document.querySelectorAll('.slide[data-slide]').length || document.querySelectorAll('.slide').length || null;
+      var total = document.querySelectorAll('.slide').length || null;
       window.parent.postMessage({type: 'showroom_slide', slide: slide, total: total}, '*');
     }
   }
-  // Poll for changes + listen for common navigation events
   setInterval(detectSlide, 500);
   document.addEventListener('keydown', function() { setTimeout(detectSlide, 100); });
   document.addEventListener('click', function() { setTimeout(detectSlide, 100); });
-  // Initial detection
   setTimeout(detectSlide, 200);
 })();
 </script>'''
@@ -505,44 +500,46 @@ def submit_feedback():
     if not data:
         return jsonify({'ok': False, 'error': 'Invalid request'}), 400
 
-    view_id = data.get('view_id')
-    slide_number = data.get('slide_number')
-    comment = (data.get('comment') or '').strip()
+    try:
+        view_id = data.get('view_id')
+        slide_number = data.get('slide_number')
+        comment = (data.get('comment') or '').strip()
 
-    if not view_id or not slide_number or not comment:
-        return jsonify({'ok': False, 'error': 'Missing required fields'}), 400
+        if not view_id or not slide_number or not comment:
+            return jsonify({'ok': False, 'error': 'Missing required fields'}), 400
 
-    if len(comment) > 1000:
-        return jsonify({'ok': False, 'error': 'Comment too long (max 1000 chars)'}), 400
+        if len(comment) > 1000:
+            return jsonify({'ok': False, 'error': 'Comment too long (max 1000 chars)'}), 400
 
-    if slide_number < 1:
-        return jsonify({'ok': False, 'error': 'Invalid slide number'}), 400
+        if slide_number < 1:
+            return jsonify({'ok': False, 'error': 'Invalid slide number'}), 400
 
-    db = get_db()
-    view = db.execute('SELECT id, viewer_email, share_link_id FROM views WHERE id = %s', (int(view_id),)).fetchone()
-    if not view:
-        return jsonify({'ok': False, 'error': 'View not found'}), 404
+        db = get_db()
+        view = db.execute('SELECT id, viewer_email, share_link_id FROM views WHERE id = %s', (int(view_id),)).fetchone()
+        if not view:
+            return jsonify({'ok': False, 'error': 'View not found'}), 404
 
-    # Validate session: find the token for this view's share link
-    link = db.execute('SELECT token, feedback_enabled FROM share_links WHERE id = %s', (view['share_link_id'],)).fetchone()
-    if not link:
-        return jsonify({'ok': False, 'error': 'Not authorized'}), 403
+        link = db.execute('SELECT token, feedback_enabled FROM share_links WHERE id = %s', (view['share_link_id'],)).fetchone()
+        if not link:
+            return jsonify({'ok': False, 'error': 'Not authorized'}), 403
 
-    if not link['feedback_enabled']:
-        return jsonify({'ok': False, 'error': 'Feedback is not enabled for this link'}), 403
+        if not link.get('feedback_enabled', True):
+            return jsonify({'ok': False, 'error': 'Feedback is not enabled for this link'}), 403
 
-    session_key = f"viewer_email_{link['token']}"
-    viewer_email = session.get(session_key)
-    if not viewer_email or viewer_email != view['viewer_email']:
-        return jsonify({'ok': False, 'error': 'Not authorized'}), 403
+        session_key = f"viewer_email_{link['token']}"
+        viewer_email = session.get(session_key)
+        if not viewer_email or viewer_email != view['viewer_email']:
+            return jsonify({'ok': False, 'error': 'Not authorized'}), 403
 
-    row = db.execute(
-        'INSERT INTO slide_feedback (view_id, slide_number, comment) VALUES (%s, %s, %s) RETURNING id',
-        (int(view_id), int(slide_number), comment)
-    ).fetchone()
-    db.commit()
+        row = db.execute(
+            'INSERT INTO slide_feedback (view_id, slide_number, comment) VALUES (%s, %s, %s) RETURNING id',
+            (int(view_id), int(slide_number), comment)
+        ).fetchone()
+        db.commit()
 
-    return jsonify({'ok': True, 'feedback_id': row['id']})
+        return jsonify({'ok': True, 'feedback_id': row['id']})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
 
 
 @app.route('/api/feedback', methods=['GET'])
