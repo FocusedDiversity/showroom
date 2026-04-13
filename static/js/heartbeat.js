@@ -12,11 +12,23 @@ function startHeartbeat(viewId) {
 
     // Listen for slide change messages from the iframe
     var slideIndicator = document.getElementById('slide-indicator');
+
+    // Method 1: postMessage from iframe
     window.addEventListener('message', function (e) {
         if (e.data && e.data.type === 'showroom_slide') {
             updateSlide(e.data.slide, e.data.total);
         }
     });
+
+    // Method 2: localStorage (written by tracking script inside iframe)
+    setInterval(function () {
+        try {
+            var raw = localStorage.getItem('showroom_current_slide');
+            if (!raw) return;
+            var data = JSON.parse(raw);
+            if (data.slide && data.slide > 0) updateSlide(data.slide, data.total);
+        } catch (e) {}
+    }, 500);
 
     function updateSlide(slide, total) {
         if (typeof slide !== 'number' || slide < 1) return;
@@ -29,26 +41,6 @@ function startHeartbeat(viewId) {
             slideIndicator.classList.add('visible');
         }
     }
-
-    // Fallback: continuously poll iframe DOM for slide changes
-    function pollIframe() {
-        try {
-            var iframe = document.getElementById('deck-frame');
-            if (!iframe) return;
-            var doc = iframe.contentDocument || iframe.contentWindow.document;
-            if (!doc) return;
-            var active = doc.querySelector('.slide.active[data-slide]');
-            if (active) {
-                var val = parseInt(active.dataset.slide);
-                var first = doc.querySelector('.slide[data-slide]');
-                var zeroIndexed = first && parseInt(first.dataset.slide) === 0;
-                var slide = zeroIndexed ? val + 1 : val;
-                var total = doc.querySelectorAll('.slide[data-slide]').length || doc.querySelectorAll('.slide').length || null;
-                updateSlide(slide, total);
-            }
-        } catch (e) { /* cross-origin or not loaded */ }
-    }
-    setInterval(pollIframe, 1000);
 
     // Pause timer when tab is hidden
     document.addEventListener('visibilitychange', function () {

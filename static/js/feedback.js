@@ -18,53 +18,29 @@ function initFeedback(viewId) {
     if (!toggleBtn || !panel) return;
 
     // --- Detect current slide ---
-    // Primary: listen for postMessage from iframe tracking script
+    // Method 1: postMessage from iframe tracking script
     window.addEventListener('message', function (e) {
         if (e.data && e.data.type === 'showroom_slide') {
-            currentSlide = e.data.slide;
-            if (panelOpen) {
-                updateSlideLabel();
-                loadPriorFeedback();
-            }
+            onSlideDetected(e.data.slide);
         }
     });
 
-    // Fallback: continuously poll the iframe DOM for current slide
-    function pollSlideFromIframe() {
+    // Method 2: localStorage (written by tracking script inside iframe — most reliable)
+    setInterval(function () {
         try {
-            var iframe = document.getElementById('deck-frame');
-            if (!iframe) return;
-            var doc = iframe.contentDocument || iframe.contentWindow.document;
-            if (!doc) return;
-            // Method 1: active slide with data-slide
-            var active = doc.querySelector('.slide.active[data-slide]');
-            if (active) {
-                var val = parseInt(active.dataset.slide);
-                var first = doc.querySelector('.slide[data-slide]');
-                var zeroIndexed = first && parseInt(first.dataset.slide) === 0;
-                var detected = zeroIndexed ? val + 1 : val;
-                if (detected > 0 && detected !== currentSlide) {
-                    currentSlide = detected;
-                    if (panelOpen) { updateSlideLabel(); loadPriorFeedback(); }
-                }
-                return;
-            }
-            // Method 2: slide indicator text
-            var el = doc.getElementById('slideNum') || doc.getElementById('slideIndicator') || doc.querySelector('.slide-indicator');
-            if (el) {
-                var m = el.textContent.match(/(\d+)\s*\/\s*(\d+)/);
-                if (m) {
-                    var detected = parseInt(m[1]);
-                    if (detected > 0 && detected !== currentSlide) {
-                        currentSlide = detected;
-                        if (panelOpen) { updateSlideLabel(); loadPriorFeedback(); }
-                    }
-                }
-            }
-        } catch (e) { /* cross-origin or not loaded yet */ }
+            var raw = localStorage.getItem('showroom_current_slide');
+            if (!raw) return;
+            var data = JSON.parse(raw);
+            if (data.slide && data.slide > 0) onSlideDetected(data.slide);
+        } catch (e) {}
+    }, 500);
+
+    function onSlideDetected(slide) {
+        if (typeof slide !== 'number' || slide < 1) return;
+        if (slide === currentSlide) return;
+        currentSlide = slide;
+        if (panelOpen) { updateSlideLabel(); renderPrior(); }
     }
-    // Poll continuously every second (handles both initial detection and slide changes)
-    setInterval(pollSlideFromIframe, 1000);
 
     // --- Toggle panel ---
     toggleBtn.addEventListener('click', function () {

@@ -51,18 +51,15 @@ def inject_slide_tracking(html_content):
 <script>
 (function() {
   var lastSlide = null;
-  // Detect if slides are 0-based or 1-based by checking first slide's data-slide value
   var firstSlide = document.querySelector('.slide[data-slide]');
   var zeroIndexed = firstSlide && parseInt(firstSlide.dataset.slide) === 0;
   function detectSlide() {
     var slide = null;
-    // Method 1: Active slide with data-slide attribute
     var active = document.querySelector('.slide.active[data-slide]');
     if (active) {
       slide = parseInt(active.dataset.slide);
       if (zeroIndexed) slide = slide + 1;
     }
-    // Method 2: Parse "N / M" from any slide indicator
     if (!slide) {
       var el = document.getElementById('slideNum') || document.getElementById('slideIndicator') || document.querySelector('.slide-indicator');
       if (el) {
@@ -73,7 +70,8 @@ def inject_slide_tracking(html_content):
     if (typeof slide === 'number' && slide > 0 && slide !== lastSlide) {
       lastSlide = slide;
       var total = document.querySelectorAll('.slide[data-slide]').length || document.querySelectorAll('.slide').length || null;
-      window.parent.postMessage({type: 'showroom_slide', slide: slide, total: total}, '*');
+      try { window.parent.postMessage({type: 'showroom_slide', slide: slide, total: total}, '*'); } catch(e) {}
+      try { localStorage.setItem('showroom_current_slide', JSON.stringify({slide: slide, total: total, t: Date.now()})); } catch(e) {}
     }
   }
   setInterval(detectSlide, 500);
