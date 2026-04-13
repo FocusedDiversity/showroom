@@ -17,42 +17,33 @@
     outline: none; border-color: #A1B8CA; box-shadow: 0 0 0 3px rgba(161,184,202,0.15);
 }
 
-/* Palette selector */
-.palette-row { display: flex; gap: 12px; flex-wrap: wrap; }
-.palette-card {
+/* Selector cards (shared) */
+.selector-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.selector-card {
     flex: 1; min-width: 140px; padding: 16px; border: 2px solid #eee; border-radius: 10px;
     cursor: pointer; transition: all 0.2s; background: #fff; text-align: center;
 }
-.palette-card:hover { border-color: #ccc; }
-.palette-card.selected { border-color: #312A29; box-shadow: 0 0 0 1px #312A29; }
+.selector-card:hover { border-color: #ccc; }
+.selector-card.selected { border-color: #312A29; box-shadow: 0 0 0 1px #312A29; }
+.selector-name { font-size: 13px; font-weight: 600; color: #333; }
+.selector-desc { font-size: 11px; color: #888; margin-top: 2px; }
+
+/* Palette swatches */
 .palette-swatches { display: flex; gap: 4px; justify-content: center; margin-bottom: 8px; }
 .palette-swatch { width: 24px; height: 24px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
-.palette-name { font-size: 13px; font-weight: 600; color: #333; }
-.palette-desc { font-size: 11px; color: #888; margin-top: 2px; }
 
-/* Layout selector */
-.layout-row { display: flex; gap: 12px; flex-wrap: wrap; }
-.layout-card {
-    flex: 1; min-width: 140px; padding: 16px; border: 2px solid #eee; border-radius: 10px;
-    cursor: pointer; transition: all 0.2s; background: #fff; text-align: center;
-}
-.layout-card:hover { border-color: #ccc; }
-.layout-card.selected { border-color: #312A29; box-shadow: 0 0 0 1px #312A29; }
-.layout-fonts { font-size: 11px; color: #A1B8CA; font-weight: 600; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-.layout-name { font-size: 13px; font-weight: 600; color: #333; }
-.layout-desc { font-size: 11px; color: #888; margin-top: 2px; }
-.layout-preview-frame {
-    width: 100%; height: 80px; border: 1px solid #eee; border-radius: 6px;
-    margin-bottom: 8px; background: #000; pointer-events: none;
-}
+/* Font preview */
+.font-sample { margin-bottom: 6px; line-height: 1.2; }
+.font-sample-title { font-size: 18px; font-weight: 700; color: #333; }
+.font-sample-body { font-size: 12px; color: #666; }
+.font-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
 
-/* Preview area */
-.design-preview { margin-top: 16px; background: #f5f5f5; border-radius: 10px; overflow: hidden; }
-.design-preview iframe {
-    width: 100%; height: 200px; border: none; background: #000;
-    pointer-events: none;
+/* Layout preview link */
+.layout-preview-link {
+    display: inline-block; margin-top: 6px; font-size: 11px; color: #A1B8CA;
+    text-decoration: none; font-weight: 600;
 }
-.design-preview-label { padding: 8px 12px; font-size: 12px; color: #888; text-align: center; }
+.layout-preview-link:hover { text-decoration: underline; }
 
 .collage-options { margin-top: 12px; }
 .collage-options label { display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 8px; font-weight: 400; }
@@ -64,7 +55,7 @@
 .generate-section input { margin-bottom: 8px; }
 .btn-generate { display: flex; align-items: center; gap: 8px; }
 .form-actions { grid-column: 1 / -1; display: flex; gap: 12px; padding-top: 16px; border-top: 1px solid #eee; }
-.btn { padding: 12px 28px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn { padding: 12px 28px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-block; }
 .btn-primary { background: #312A29; color: #fff; }
 .btn-primary:hover { background: #4a4140; }
 .btn-secondary { background: #f0f0f0; color: #333; }
@@ -73,6 +64,10 @@
 .loading .spinner { display: inline-block; }
 .loading .btn-text { display: none; }
 </style>
+<!-- Load Google Fonts for font pairing preview -->
+{% for fp in font_pairings %}
+<link rel="stylesheet" href="{{ fp.font_imports }}">
+{% endfor %}
 {% endblock %}
 
 {% block content %}
@@ -123,7 +118,7 @@ Content for the first section...
         </div>
     </div>
 
-    <!-- Right column: Design & Collage -->
+    <!-- Right column: Design -->
     <div>
         <div style="margin-bottom: 16px;">
             <a href="{{ url_for('authoring.pptx_import') }}" class="btn btn-secondary" style="font-size:13px; padding:8px 16px;">
@@ -131,14 +126,15 @@ Content for the first section...
             </a>
         </div>
 
+        <!-- Color Palette -->
         <div class="form-section">
             <h3>Color Palette</h3>
             <input type="hidden" id="palette_slug" name="palette_slug" value="{{ palettes[0].slug }}">
-            <div class="palette-row">
+            <div class="selector-row">
                 {% for p in palettes %}
-                <div class="palette-card {% if loop.first %}selected{% endif %}"
-                     data-slug="{{ p.slug }}"
-                     onclick="selectPalette('{{ p.slug }}', this)">
+                <div class="selector-card {% if loop.first %}selected{% endif %}"
+                     data-slug="{{ p.slug }}" data-type="palette"
+                     onclick="selectCard('palette', '{{ p.slug }}', this)">
                     <div class="palette-swatches">
                         <div class="palette-swatch" style="background: {{ p.background_dark }};"></div>
                         <div class="palette-swatch" style="background: {{ p.accent_primary }};"></div>
@@ -146,29 +142,54 @@ Content for the first section...
                         <div class="palette-swatch" style="background: {{ p.accent_tertiary }};"></div>
                         <div class="palette-swatch" style="background: {{ p.background_light }};"></div>
                     </div>
-                    <div class="palette-name">{{ p.name }}</div>
-                    <div class="palette-desc">{{ p.description }}</div>
+                    <div class="selector-name">{{ p.name }}</div>
+                    <div class="selector-desc">{{ p.description }}</div>
                 </div>
                 {% endfor %}
             </div>
         </div>
 
+        <!-- Font Pairing -->
         <div class="form-section">
-            <h3>Slide Layout</h3>
-            <input type="hidden" id="layout_slug" name="layout_slug" value="{{ layouts[0].slug }}">
-            <div class="layout-row">
-                {% for l in layouts %}
-                <div class="layout-card {% if loop.first %}selected{% endif %}"
-                     data-slug="{{ l.slug }}"
-                     onclick="selectLayout('{{ l.slug }}', this)">
-                    <div class="layout-fonts">{{ l.font_title | replace("'", "") | truncate(20) }}</div>
-                    <div class="layout-name">{{ l.name }}</div>
-                    <div class="layout-desc">{{ l.description }}</div>
+            <h3>Font Pairing</h3>
+            <input type="hidden" id="font_slug" name="font_slug" value="{{ font_pairings[0].slug }}">
+            <div class="selector-row">
+                {% for fp in font_pairings %}
+                <div class="selector-card {% if loop.first %}selected{% endif %}"
+                     data-slug="{{ fp.slug }}" data-type="font"
+                     onclick="selectCard('font', '{{ fp.slug }}', this)">
+                    <div class="font-sample">
+                        <div class="font-sample-title" style="font-family: {{ fp.font_title }};">Aa Bb Cc</div>
+                        <div class="font-sample-body" style="font-family: {{ fp.font_content }};">The quick brown fox</div>
+                    </div>
+                    <div class="selector-name">{{ fp.name }}</div>
+                    <div class="selector-desc">{{ fp.description }}</div>
                 </div>
                 {% endfor %}
             </div>
         </div>
 
+        <!-- Layout Collection -->
+        <div class="form-section">
+            <h3>Layout Collection</h3>
+            <input type="hidden" id="layout_slug" name="layout_slug" value="{{ layouts[0].slug }}">
+            <div class="selector-row">
+                {% for l in layouts %}
+                <div class="selector-card {% if loop.first %}selected{% endif %}"
+                     data-slug="{{ l.slug }}" data-type="layout"
+                     onclick="selectCard('layout', '{{ l.slug }}', this)">
+                    <div class="selector-name">{{ l.name }}</div>
+                    <div class="selector-desc">{{ l.description }}</div>
+                    <a href="#" class="layout-preview-link"
+                       onclick="event.stopPropagation(); openLayoutPreview('{{ l.slug }}'); return false;">
+                        Preview slides
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Collage -->
         <div class="form-section">
             <h3>Title Slide Collage</h3>
             <div class="collage-options">
@@ -179,7 +200,6 @@ Content for the first section...
 
             <input type="hidden" id="collage_id" name="collage_id" value="">
 
-            <!-- Existing collage gallery -->
             <div id="collageGallery" style="display:none;">
                 {% if collages %}
                 <div class="collage-gallery">
@@ -190,14 +210,13 @@ Content for the first section...
                     {% endfor %}
                 </div>
                 {% else %}
-                <p style="color:#888; font-size:13px;">No collages in library yet. Upload one or generate with AI.</p>
+                <p style="color:#888; font-size:13px;">No collages in library yet.</p>
                 {% endif %}
             </div>
 
-            <!-- Generate collage -->
             <div id="collageGenerate" style="display:none;" class="generate-section">
                 <div class="form-group">
-                    <input type="text" id="collagePrompt" placeholder="e.g., Nature and technology, botanical elements with circuit diagrams">
+                    <input type="text" id="collagePrompt" placeholder="e.g., Nature and technology, botanical elements">
                 </div>
                 <button type="button" class="btn btn-secondary btn-generate" onclick="generateCollage()">
                     <span class="btn-text">Generate Collage</span>
@@ -221,34 +240,32 @@ Content for the first section...
 
 {% block scripts %}
 <script>
+// Unified card selection
+function selectCard(type, slug, el) {
+    var cards = el.parentElement.querySelectorAll('.selector-card');
+    cards.forEach(function(c) { c.classList.remove('selected'); });
+    el.classList.add('selected');
+    document.getElementById(type + '_slug').value = slug;
+}
+
+// Layout collection preview
+function openLayoutPreview(layoutSlug) {
+    var palette = document.getElementById('palette_slug').value;
+    var font = document.getElementById('font_slug').value;
+    window.open('/admin/author/layouts/' + layoutSlug + '/preview?palette=' + palette + '&font=' + font, '_blank');
+}
+
 // Pre-select from URL params (after PPTX import)
 (function() {
     var params = new URLSearchParams(window.location.search);
-    var presetPalette = params.get('palette');
-    var presetLayout = params.get('layout');
-    if (presetPalette) {
-        var card = document.querySelector('.palette-card[data-slug="' + presetPalette + '"]');
-        if (card) { selectPalette(presetPalette, card); }
-    }
-    if (presetLayout) {
-        var card = document.querySelector('.layout-card[data-slug="' + presetLayout + '"]');
-        if (card) { selectLayout(presetLayout, card); }
-    }
+    ['palette', 'font', 'layout'].forEach(function(type) {
+        var preset = params.get(type);
+        if (preset) {
+            var card = document.querySelector('.selector-card[data-type="' + type + '"][data-slug="' + preset + '"]');
+            if (card) { selectCard(type, preset, card); }
+        }
+    });
 })();
-
-// Palette selection
-function selectPalette(slug, el) {
-    document.querySelectorAll('.palette-card').forEach(function(c) { c.classList.remove('selected'); });
-    el.classList.add('selected');
-    document.getElementById('palette_slug').value = slug;
-}
-
-// Layout selection
-function selectLayout(slug, el) {
-    document.querySelectorAll('.layout-card').forEach(function(c) { c.classList.remove('selected'); });
-    el.classList.add('selected');
-    document.getElementById('layout_slug').value = slug;
-}
 
 // Model template loading
 document.getElementById('model_name').addEventListener('change', function() {
@@ -268,9 +285,7 @@ document.querySelectorAll('input[name="collage_mode"]').forEach(function(radio) 
     radio.addEventListener('change', function() {
         document.getElementById('collageGallery').style.display = this.value === 'existing' ? 'block' : 'none';
         document.getElementById('collageGenerate').style.display = this.value === 'generate' ? 'block' : 'none';
-        if (this.value === 'none') {
-            document.getElementById('collage_id').value = '';
-        }
+        if (this.value === 'none') document.getElementById('collage_id').value = '';
     });
 });
 
@@ -307,7 +322,6 @@ function generateCollage() {
     .catch(function() { btn.classList.remove('loading'); alert('Generation failed.'); });
 }
 
-// Form submit loading state
 document.getElementById('authorForm').addEventListener('submit', function() {
     document.getElementById('generateBtn').classList.add('loading');
 });

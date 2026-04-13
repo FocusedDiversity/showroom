@@ -69,3 +69,13 @@
 **Depends on:** deck-design-system
 
 **Status:** complete
+
+---
+
+### 8. font-separation
+
+**Description:** Separates font pairings from layout collections into a third independent dimension. Users pick color palette, font pairing, and layout collection independently. Layout collections get preview UI showing their slide type layouts.
+
+**Depends on:** deck-design-system, pptx-import
+
+**Status:** complete

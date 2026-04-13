@@ -452,12 +452,13 @@ def render_slide(slide, slide_index, palette, layout, collage_data_uri='', dark=
     return template.render(**ctx)
 
 
-def generate_deck(slides, palette, layout, collage_data_uri='', deck_title='Untitled Deck'):
+def generate_deck(slides, palette, font_pairing, layout, collage_data_uri='', deck_title='Untitled Deck'):
     """Generate a complete self-contained HTML deck.
 
     Args:
         slides: List of Slide objects from the parser
         palette: Palette object from palettes.py
+        font_pairing: FontPairing object from fonts.py
         layout: Layout object from layouts.py
         collage_data_uri: Base64 data URI for the title slide collage
         deck_title: Title shown in the browser tab
@@ -466,8 +467,6 @@ def generate_deck(slides, palette, layout, collage_data_uri='', deck_title='Unti
         str: Complete HTML document
     """
     env = _get_jinja_env()
-    palette_meta = palette.to_metadata()
-    layout_meta = layout.to_metadata()
 
     # Render each slide
     slides_html_parts = []
@@ -494,9 +493,10 @@ def generate_deck(slides, palette, layout, collage_data_uri='', deck_title='Unti
 
     return shell_template.render(
         deck_title=deck_title,
-        font_imports=f"@import url('{layout.font_imports}');",
-        font_title=layout.font_title,
-        font_content=layout.font_content,
+        # Fonts from FontPairing
+        font_imports=f"@import url('{font_pairing.font_imports}');",
+        font_title=font_pairing.font_title,
+        font_content=font_pairing.font_content,
         # Palette colors
         bg_dark=palette.background_dark,
         bg_light=palette.background_light,
@@ -521,18 +521,6 @@ def generate_deck(slides, palette, layout, collage_data_uri='', deck_title='Unti
         slides_html=slides_html,
         total_slides=len(slides),
     )
-
-
-def generate_deck_compat(slides, theme, collage_data_uri='', deck_title='Untitled Deck'):
-    """Compatibility shim — accepts a Theme object and converts to Palette + Layout.
-
-    Used by existing routes during the migration period.
-    """
-    from authoring.palettes import ARCTIC_BREEZE
-    from authoring.layouts import EDITORIAL
-    return generate_deck(slides, ARCTIC_BREEZE, EDITORIAL,
-                         collage_data_uri=collage_data_uri,
-                         deck_title=deck_title)
 
 
 # ── Logo SVG helper ──────────────────────────────────────────────────

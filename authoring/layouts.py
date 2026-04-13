@@ -1,9 +1,9 @@
 """
-Layout Registry — named layout packages for deck generation.
+Layout Collection Registry — named layout packages for deck generation.
 
-Each layout defines a font pairing (title font ≠ content font), a template
-directory, and style metadata. Layouts are independent of palettes — any
-layout can be combined with any palette.
+Each layout collection defines a template directory (17 slide type templates
++ shell) and style metadata (border-radius, spacing, shadows, etc.).
+Fonts and colors are provided independently via FontPairing and Palette.
 """
 
 from dataclasses import dataclass, field
@@ -14,9 +14,6 @@ class Layout:
     name: str
     slug: str
     description: str
-    font_title: str           # CSS font-family for slide titles
-    font_content: str         # CSS font-family for body/content
-    font_imports: str         # Google Fonts import URL
     template_dir: str         # Relative path under templates/ to layout's templates
     style_metadata: dict = field(default_factory=dict)
 
@@ -26,32 +23,17 @@ class Layout:
             'name': self.name,
             'slug': self.slug,
             'description': self.description,
-            'font_title': self.font_title,
-            'font_content': self.font_content,
-            'font_imports': self.font_imports,
             'template_dir': self.template_dir,
             **self.style_metadata,
         }
 
 
-# ── Built-in Layouts ─────────────────────────────────────────────────
-
-_GOOGLE_FONTS_BASE = 'https://fonts.googleapis.com/css2?'
+# ── Built-in Layout Collections ──────────────────────────────────────
 
 EDITORIAL = Layout(
     name='Editorial',
     slug='editorial',
-    description='Clean editorial feel — Zilla Slab titles, Quicksand body, generous whitespace',
-    font_title="'Zilla Slab', serif",
-    font_content="'Quicksand', sans-serif",
-    font_imports=(
-        _GOOGLE_FONTS_BASE
-        + 'family=Zilla+Slab:ital,wght@0,300;0,400;0,500;0,600;0,700'
-        '&family=Quicksand:wght@300;400;500;600;700'
-        '&family=Herr+Von+Muellerhoff'
-        '&family=Abril+Fatface'
-        '&display=swap'
-    ),
+    description='Clean editorial feel — generous whitespace, thin accent lines, subtle shadows',
     template_dir='authoring/layouts/editorial',
     style_metadata={
         'border_radius': '16px',
@@ -69,16 +51,7 @@ EDITORIAL = Layout(
 BOLD = Layout(
     name='Bold',
     slug='bold',
-    description='High-contrast — Abril Fatface titles, Quicksand body, strong dividers',
-    font_title="'Abril Fatface', serif",
-    font_content="'Quicksand', sans-serif",
-    font_imports=(
-        _GOOGLE_FONTS_BASE
-        + 'family=Abril+Fatface'
-        '&family=Quicksand:wght@300;400;500;600;700'
-        '&family=Zilla+Slab:wght@400;600;700'
-        '&display=swap'
-    ),
+    description='High-contrast — strong dividers, square corners, compact spacing',
     template_dir='authoring/layouts/bold',
     style_metadata={
         'border_radius': '4px',
@@ -96,16 +69,7 @@ BOLD = Layout(
 ELEGANT = Layout(
     name='Elegant',
     slug='elegant',
-    description='Premium consulting feel — Herr Von Muellerhoff display, Zilla Slab body',
-    font_title="'Herr Von Muellerhoff', cursive",
-    font_content="'Zilla Slab', serif",
-    font_imports=(
-        _GOOGLE_FONTS_BASE
-        + 'family=Herr+Von+Muellerhoff'
-        '&family=Zilla+Slab:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400'
-        '&family=Quicksand:wght@300;400;500;600;700'
-        '&display=swap'
-    ),
+    description='Premium consulting feel — rounded shapes, generous spacing, soft shadows',
     template_dir='authoring/layouts/elegant',
     style_metadata={
         'border_radius': '24px',
@@ -146,9 +110,6 @@ def _row_to_layout(row):
         name=row['name'],
         slug=row['slug'],
         description=row.get('description', ''),
-        font_title=data.get('font_title', "'Quicksand', sans-serif"),
-        font_content=data.get('font_content', "'Quicksand', sans-serif"),
-        font_imports=data.get('font_imports', ''),
         template_dir=template_dir,
         style_metadata=data.get('style_metadata', {}),
     )
