@@ -29,41 +29,42 @@ function initFeedback(viewId) {
         }
     });
 
-    // Fallback: poll the iframe DOM directly (same-origin)
+    // Fallback: continuously poll the iframe DOM for current slide
     function pollSlideFromIframe() {
-        if (currentSlide) return; // postMessage already working
         try {
             var iframe = document.getElementById('deck-frame');
-            if (!iframe || !iframe.contentDocument) return;
-            var doc = iframe.contentDocument;
-            // Method 1: active slide with data-slide (detect 0-based vs 1-based)
+            if (!iframe) return;
+            var doc = iframe.contentDocument || iframe.contentWindow.document;
+            if (!doc) return;
+            // Method 1: active slide with data-slide
             var active = doc.querySelector('.slide.active[data-slide]');
             if (active) {
                 var val = parseInt(active.dataset.slide);
                 var first = doc.querySelector('.slide[data-slide]');
                 var zeroIndexed = first && parseInt(first.dataset.slide) === 0;
-                currentSlide = zeroIndexed ? val + 1 : val;
-                if (panelOpen) updateSlideLabel();
+                var detected = zeroIndexed ? val + 1 : val;
+                if (detected > 0 && detected !== currentSlide) {
+                    currentSlide = detected;
+                    if (panelOpen) { updateSlideLabel(); loadPriorFeedback(); }
+                }
                 return;
             }
-            // Method 2: slide indicator text "N / M"
+            // Method 2: slide indicator text
             var el = doc.getElementById('slideNum') || doc.getElementById('slideIndicator') || doc.querySelector('.slide-indicator');
             if (el) {
                 var m = el.textContent.match(/(\d+)\s*\/\s*(\d+)/);
                 if (m) {
-                    currentSlide = parseInt(m[1]);
-                    if (panelOpen) updateSlideLabel();
+                    var detected = parseInt(m[1]);
+                    if (detected > 0 && detected !== currentSlide) {
+                        currentSlide = detected;
+                        if (panelOpen) { updateSlideLabel(); loadPriorFeedback(); }
+                    }
                 }
             }
         } catch (e) { /* cross-origin or not loaded yet */ }
     }
-    // Poll every second for 10 seconds as fallback
-    var pollCount = 0;
-    var pollTimer = setInterval(function () {
-        pollSlideFromIframe();
-        pollCount++;
-        if (currentSlide || pollCount >= 10) clearInterval(pollTimer);
-    }, 1000);
+    // Poll continuously every second (handles both initial detection and slide changes)
+    setInterval(pollSlideFromIframe, 1000);
 
     // --- Toggle panel ---
     toggleBtn.addEventListener('click', function () {
@@ -152,9 +153,18 @@ function initFeedback(viewId) {
                 var pendingClass = f._pending ? ' is-pending' : '';
                 div.className = 'feedback-prior-item' + (isOwn ? '' : ' is-other') + pendingClass;
                 var authorLabel = isOwn ? 'You' : escapeHtml(f.viewer_email || '');
+                var deleteBtn = (isOwn && !f._pending && f.id && !String(f.id).startsWith('_temp'))
+                    ? ' <button class="feedback-delete-btn" onclick="event.stopPropagation();" data-id="' + f.id + '" title="Delete">×</button>'
+                    : '';
                 div.innerHTML = '<p class="feedback-prior-text">' + escapeHtml(f.comment) + '</p>' +
-                    '<span class="feedback-prior-time"><strong class="feedback-prior-author">' + authorLabel + '</strong> · ' + timeAgo(f.created_at) + '</span>';
+                    '<span class="feedback-prior-time"><strong class="feedback-prior-author">' + authorLabel + '</strong> · ' + timeAgo(f.created_at) + deleteBtn + '</span>';
                 panelPrior.appendChild(div);
+            });
+            // Attach delete handlers
+            panelPrior.querySelectorAll('.feedback-delete-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    deleteFeedback(parseInt(this.dataset.id));
+                });
             });
         }
 
@@ -281,5 +291,27 @@ function initFeedback(viewId) {
         if (diff < 3600) return Math.floor(diff / 60) + ' min ago';
         if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
         return new Date(isoStr).toLocaleDateString();
+    }
+
+    // --- Delete own feedback ---
+    function deleteFeedback(feedbackId) {
+        fetch('/api/feedback/' + feedbackId, { method: 'DELETE' })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.ok) {
+                    // Remove from cache and re-render
+                    Object.keys(feedbackCache).forEach(function (slide) {
+                        feedbackCache[slide] = feedbackCache[slide].filter(function (f) {
+                            return f.id !== feedbackId;
+                        });
+                    });
+                    renderPrior();
+                } else {
+                    showError(data.error || 'Could not delete feedback.');
+                }
+            })
+            .catch(function () {
+                showError('Network error. Please try again.');
+            });
     }
 }

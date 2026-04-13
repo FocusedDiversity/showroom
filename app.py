@@ -654,6 +654,41 @@ def get_all_feedback():
     })
 
 
+@app.route('/api/feedback/<int:feedback_id>', methods=['DELETE'])
+def delete_feedback(feedback_id):
+    """Delete own feedback comment."""
+    db = get_db()
+
+    try:
+        # Get the feedback and its associated view
+        fb = db.execute('''
+            SELECT sf.id, sf.view_id, v.viewer_email, v.share_link_id
+            FROM slide_feedback sf
+            JOIN views v ON v.id = sf.view_id
+            WHERE sf.id = %s
+        ''', (feedback_id,)).fetchone()
+
+        if not fb:
+            return jsonify({'ok': False, 'error': 'Feedback not found'}), 404
+
+        # Validate session — must be the author of this feedback
+        link = db.execute('SELECT token FROM share_links WHERE id = %s', (fb['share_link_id'],)).fetchone()
+        if not link:
+            return jsonify({'ok': False, 'error': 'Not authorized'}), 403
+
+        session_key = f"viewer_email_{link['token']}"
+        viewer_email = session.get(session_key)
+        if not viewer_email or viewer_email != fb['viewer_email']:
+            return jsonify({'ok': False, 'error': 'You can only delete your own feedback'}), 403
+
+        db.execute('DELETE FROM slide_feedback WHERE id = %s', (feedback_id,))
+        db.commit()
+
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+
 # ── Init DB on import (for gunicorn) ─────────────────────────────────
 
 init_db(app)

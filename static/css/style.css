@@ -588,6 +588,11 @@ a:hover { text-decoration: underline; }
 .feedback-prior-author { font-weight: 500; color: var(--text-secondary); }
 .feedback-prior-item.is-pending { opacity: 0.7; }
 .feedback-prior-empty { font-size: 12px; color: var(--text-secondary); font-style: italic; }
+.feedback-delete-btn {
+    background: none; border: none; color: var(--text-secondary); cursor: pointer;
+    font-size: 14px; padding: 0 2px; margin-left: 6px; opacity: 0.5; line-height: 1;
+}
+.feedback-delete-btn:hover { opacity: 1; color: #CC5E58; }
 
 .feedback-error {
     padding: 8px 16px;

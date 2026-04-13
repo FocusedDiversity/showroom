@@ -30,13 +30,13 @@ function startHeartbeat(viewId) {
         }
     }
 
-    // Fallback: poll iframe DOM directly if postMessage isn't working
+    // Fallback: continuously poll iframe DOM for slide changes
     function pollIframe() {
-        if (currentSlide) return;
         try {
             var iframe = document.getElementById('deck-frame');
-            if (!iframe || !iframe.contentDocument) return;
-            var doc = iframe.contentDocument;
+            if (!iframe) return;
+            var doc = iframe.contentDocument || iframe.contentWindow.document;
+            if (!doc) return;
             var active = doc.querySelector('.slide.active[data-slide]');
             if (active) {
                 var val = parseInt(active.dataset.slide);
@@ -48,12 +48,7 @@ function startHeartbeat(viewId) {
             }
         } catch (e) { /* cross-origin or not loaded */ }
     }
-    var iframePollCount = 0;
-    var iframePollTimer = setInterval(function () {
-        pollIframe();
-        iframePollCount++;
-        if (currentSlide || iframePollCount >= 10) clearInterval(iframePollTimer);
-    }, 1000);
+    setInterval(pollIframe, 1000);
 
     // Pause timer when tab is hidden
     document.addEventListener('visibilitychange', function () {

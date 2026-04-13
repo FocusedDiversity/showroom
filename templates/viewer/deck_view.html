@@ -41,9 +41,9 @@
     </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/heartbeat.js') }}?v=118"></script>
+<script src="{{ url_for('static', filename='js/heartbeat.js') }}?v=119"></script>
 {% if feedback_enabled %}
-<script src="{{ url_for('static', filename='js/feedback.js') }}?v=118"></script>
+<script src="{{ url_for('static', filename='js/feedback.js') }}?v=119"></script>
 {% endif %}
 <script>
     startHeartbeat({{ view_id | default(0, true) }});
