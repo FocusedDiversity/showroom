@@ -599,6 +599,15 @@ a:hover { text-decoration: underline; }
     background: var(--border); color: var(--text-secondary);
 }
 .feedback-slide-tag.is-current { background: #A1B8CA; color: #fff; }
+.feedback-slide-picker {
+    display: flex; align-items: center; gap: 8px; padding: 0 16px 8px;
+    font-size: 13px; font-weight: 500; color: var(--text-secondary);
+}
+.feedback-slide-select {
+    padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px;
+    font-family: inherit; font-size: 13px; background: var(--bg);
+    min-width: 52px;
+}
 .feedback-prior-item.is-current-slide { border-left-color: #A1B8CA; }
 
 .feedback-error {

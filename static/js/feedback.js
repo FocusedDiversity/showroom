@@ -1,7 +1,7 @@
 function initFeedback(viewId) {
     if (!viewId) return;
 
-    var currentSlide = null;
+    var currentSlide = 1;
     var panelOpen = false;
     var feedbackCache = {}; // { slideNumber: [{ id, comment, created_at }] }
 
@@ -14,41 +14,67 @@ function initFeedback(viewId) {
     var panelSend = document.getElementById('feedback-send');
     var panelPrior = document.getElementById('feedback-prior');
     var panelConfirm = document.getElementById('feedback-confirm');
+    var slideSelect = document.getElementById('feedback-slide-select');
 
     if (!toggleBtn || !panel) return;
 
-    // --- Detect current slide ---
+    // --- Slide picker: populate with slide numbers ---
+    function populateSlideSelect(total) {
+        if (!slideSelect) return;
+        var current = slideSelect.value;
+        slideSelect.innerHTML = '';
+        var count = total || 20; // default max if unknown
+        for (var i = 1; i <= count; i++) {
+            var opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = i;
+            slideSelect.appendChild(opt);
+        }
+        if (current) slideSelect.value = current;
+    }
+    populateSlideSelect(20);
+
+    // When user changes the slide picker, update currentSlide
+    if (slideSelect) {
+        slideSelect.addEventListener('change', function () {
+            currentSlide = parseInt(this.value) || 1;
+            updateSlideLabel();
+            renderPrior();
+        });
+    }
+
+    // --- Auto-detect current slide ---
     // Method 1: postMessage from iframe tracking script
     window.addEventListener('message', function (e) {
         if (e.data && e.data.type === 'showroom_slide') {
-            onSlideDetected(e.data.slide);
+            onSlideDetected(e.data.slide, e.data.total);
         }
     });
 
-    // Method 2: localStorage (written by tracking script inside iframe — most reliable)
+    // Method 2: localStorage (written by tracking script inside iframe)
     setInterval(function () {
         try {
             var raw = localStorage.getItem('showroom_current_slide');
             if (!raw) return;
             var data = JSON.parse(raw);
-            if (data.slide && data.slide > 0) onSlideDetected(data.slide);
+            if (data.slide && data.slide > 0) onSlideDetected(data.slide, data.total);
         } catch (e) {}
     }, 500);
 
-    function onSlideDetected(slide) {
+    function onSlideDetected(slide, total) {
         if (typeof slide !== 'number' || slide < 1) return;
+        if (total && slideSelect && slideSelect.options.length !== total) {
+            populateSlideSelect(total);
+        }
         if (slide === currentSlide) return;
         currentSlide = slide;
+        if (slideSelect) slideSelect.value = slide;
         if (panelOpen) { updateSlideLabel(); renderPrior(); }
     }
 
     // --- Toggle panel ---
     toggleBtn.addEventListener('click', function () {
-        if (panelOpen) {
-            closePanel();
-        } else {
-            openPanel();
-        }
+        if (panelOpen) closePanel(); else openPanel();
     });
 
     panelClose.addEventListener('click', function () {
@@ -73,9 +99,7 @@ function initFeedback(viewId) {
     }
 
     function updateSlideLabel() {
-        panelSlideLabel.textContent = currentSlide
-            ? 'Feedback for Slide ' + currentSlide
-            : 'Feedback';
+        panelSlideLabel.textContent = 'Feedback for Slide ' + currentSlide;
     }
 
     // --- Load all feedback for deck (own + others) ---
@@ -87,7 +111,6 @@ function initFeedback(viewId) {
             .then(function (data) {
                 if (!data.ok) return;
 
-                // Collect pending optimistic entries before replacing cache
                 var pendingItems = [];
                 Object.keys(feedbackCache).forEach(function (slide) {
                     feedbackCache[slide].forEach(function (f) {
@@ -95,14 +118,12 @@ function initFeedback(viewId) {
                     });
                 });
 
-                // Replace cache with server data
                 feedbackCache = {};
                 data.feedback.forEach(function (f) {
                     if (!feedbackCache[f.slide_number]) feedbackCache[f.slide_number] = [];
                     feedbackCache[f.slide_number].push(f);
                 });
 
-                // Re-add pending optimistic entries that aren't yet in server data
                 pendingItems.forEach(function (p) {
                     if (!feedbackCache[p.slide]) feedbackCache[p.slide] = [];
                     feedbackCache[p.slide].push(p.item);
@@ -116,7 +137,6 @@ function initFeedback(viewId) {
     function renderPrior() {
         panelPrior.innerHTML = '';
 
-        // Collect all feedback across all slides, sorted by slide number
         var allSlides = Object.keys(feedbackCache).map(Number).sort(function (a, b) { return a - b; });
         var totalItems = 0;
         allSlides.forEach(function (s) { totalItems += feedbackCache[s].length; });
@@ -131,7 +151,6 @@ function initFeedback(viewId) {
                 var items = feedbackCache[slideNum];
                 if (!items || items.length === 0) return;
 
-                // Current slide items get highlighted
                 var isCurrent = slideNum === currentSlide;
 
                 items.forEach(function (f) {
@@ -150,7 +169,6 @@ function initFeedback(viewId) {
                     panelPrior.appendChild(div);
                 });
             });
-            // Attach delete handlers
             panelPrior.querySelectorAll('.feedback-delete-btn').forEach(function (btn) {
                 btn.addEventListener('click', function () {
                     deleteFeedback(parseInt(this.dataset.id));
@@ -158,7 +176,6 @@ function initFeedback(viewId) {
             });
         }
 
-        // Update input placeholder — check if viewer has own comments on this slide
         var currentItems = feedbackCache[currentSlide] || [];
         var hasOwn = currentItems.some(function (f) { return f.is_own !== false; });
         panelInput.placeholder = hasOwn
@@ -178,13 +195,11 @@ function initFeedback(viewId) {
     function submitFeedback() {
         var comment = panelInput.value.trim();
         if (!comment) return;
-        // Default to slide 1 if slide detection hasn't fired yet
-        if (!currentSlide) currentSlide = 1;
 
-        var slideAtSubmit = currentSlide;
+        // Read slide from the picker (always accurate)
+        var slideAtSubmit = slideSelect ? parseInt(slideSelect.value) || currentSlide : currentSlide;
         var tempId = '_temp_' + Math.random().toString(36).slice(2);
 
-        // Optimistic: add to cache and render immediately
         if (!feedbackCache[slideAtSubmit]) feedbackCache[slideAtSubmit] = [];
         feedbackCache[slideAtSubmit].push({
             id: tempId,
@@ -197,9 +212,8 @@ function initFeedback(viewId) {
 
         panelInput.value = '';
         renderPrior();
-        showConfirmation();
+        showConfirmation(slideAtSubmit);
 
-        // Fire API in background
         fetch('/api/feedback', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -212,7 +226,6 @@ function initFeedback(viewId) {
         .then(function (r) { return r.json(); })
         .then(function (data) {
             if (data.ok) {
-                // Replace temp ID with real ID, clear pending
                 var items = feedbackCache[slideAtSubmit] || [];
                 for (var i = 0; i < items.length; i++) {
                     if (items[i].id === tempId) {
@@ -239,7 +252,6 @@ function initFeedback(viewId) {
     }
 
     function showError(message) {
-        // Remove any existing error
         var existing = panel.querySelector('.feedback-error');
         if (existing) existing.remove();
 
@@ -247,7 +259,6 @@ function initFeedback(viewId) {
         errDiv.className = 'feedback-error';
         errDiv.textContent = message;
 
-        // Insert after the input row
         var inputRow = panelInput.parentElement;
         inputRow.parentElement.insertBefore(errDiv, inputRow.nextSibling);
 
@@ -256,11 +267,10 @@ function initFeedback(viewId) {
         }, 4000);
     }
 
-    // --- Confirmation ---
-    function showConfirmation() {
+    function showConfirmation(slide) {
         panelConfirm.style.display = 'flex';
         panelConfirm.querySelector('.feedback-confirm-text').textContent =
-            'Thanks for your feedback on Slide ' + currentSlide + '!';
+            'Thanks for your feedback on Slide ' + slide + '!';
 
         setTimeout(function () {
             panelConfirm.style.display = 'none';
@@ -269,7 +279,6 @@ function initFeedback(viewId) {
         }, 3000);
     }
 
-    // --- Helpers ---
     function escapeHtml(str) {
         var div = document.createElement('div');
         div.textContent = str;
@@ -284,13 +293,11 @@ function initFeedback(viewId) {
         return new Date(isoStr).toLocaleDateString();
     }
 
-    // --- Delete own feedback ---
     function deleteFeedback(feedbackId) {
         fetch('/api/feedback/' + feedbackId, { method: 'DELETE' })
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.ok) {
-                    // Remove from cache and re-render
                     Object.keys(feedbackCache).forEach(function (slide) {
                         feedbackCache[slide] = feedbackCache[slide].filter(function (f) {
                             return f.id !== feedbackId;

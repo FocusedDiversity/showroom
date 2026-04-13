@@ -28,6 +28,10 @@
                 <button class="feedback-panel-close" id="feedback-close">&times;</button>
             </div>
             <div class="feedback-prior" id="feedback-prior"></div>
+            <div class="feedback-slide-picker">
+                <label for="feedback-slide-select">Slide:</label>
+                <select id="feedback-slide-select" class="feedback-slide-select"></select>
+            </div>
             <div class="feedback-input-row">
                 <input type="text" id="feedback-input" class="feedback-input" placeholder="Share your thoughts on this slide..." maxlength="1000">
                 <button class="feedback-send-btn" id="feedback-send">Send</button>
@@ -41,9 +45,9 @@
     </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/heartbeat.js') }}?v=122"></script>
+<script src="{{ url_for('static', filename='js/heartbeat.js') }}?v=123"></script>
 {% if feedback_enabled %}
-<script src="{{ url_for('static', filename='js/feedback.js') }}?v=122"></script>
+<script src="{{ url_for('static', filename='js/feedback.js') }}?v=123"></script>
 {% endif %}
 <script>
     startHeartbeat({{ view_id | default(0, true) }});
