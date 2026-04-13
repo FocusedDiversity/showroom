@@ -50,18 +50,18 @@ def inject_slide_tracking(html_content):
     tracking_script = '''
 <script>
 (function() {
-  // Detect slide navigation and notify parent
+  // Detect slide navigation and notify parent (1-based slide numbers)
   var lastSlide = null;
   function detectSlide() {
     var slide = null;
-    // Method 1: Look for active slide with data-slide attribute
+    // Method 1: Look for active slide with data-slide attribute (0-based → convert to 1-based)
     var active = document.querySelector('.slide.active[data-slide]');
-    if (active) { slide = parseInt(active.dataset.slide); }
+    if (active) { slide = parseInt(active.dataset.slide) + 1; }
     // Method 2: Check for a current/currentSlide variable
-    if (!slide && typeof current !== 'undefined') { slide = current; }
-    // Method 3: Look for slide-indicator text like "3 / 12"
+    if (!slide && typeof current !== 'undefined') { slide = current + 1; }
+    // Method 3: Look for slide-indicator or slideNum text like "3 / 12"
     if (!slide) {
-      var indicator = document.querySelector('.slide-indicator');
+      var indicator = document.querySelector('.slide-indicator') || document.getElementById('slideNum');
       if (indicator) {
         var match = indicator.textContent.match(/(\\d+)\\s*\\/\\s*(\\d+)/);
         if (match) { slide = parseInt(match[1]); }
@@ -69,7 +69,7 @@ def inject_slide_tracking(html_content):
     }
     if (slide && slide !== lastSlide) {
       lastSlide = slide;
-      var total = document.querySelectorAll('.slide[data-slide]').length || null;
+      var total = document.querySelectorAll('.slide[data-slide]').length || document.querySelectorAll('.slide').length || null;
       window.parent.postMessage({type: 'showroom_slide', slide: slide, total: total}, '*');
     }
   }
