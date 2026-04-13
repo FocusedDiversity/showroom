@@ -27,7 +27,7 @@ jobs:
             --source=. \
             --region=us-west1 \
             --port=8080 \
-            --memory=256Mi \
+            --memory=512Mi \
             --min-instances=1 \
             --max-instances=3 \
             --allow-unauthenticated \

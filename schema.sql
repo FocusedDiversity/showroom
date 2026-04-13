@@ -78,6 +78,9 @@ CREATE TABLE IF NOT EXISTS authoring_sessions (
     markdown_content TEXT NOT NULL,
     model_name TEXT,
     theme_name TEXT NOT NULL DEFAULT 'synaptiq',
+    palette_slug TEXT NOT NULL DEFAULT 'arctic-breeze',
+    font_slug TEXT NOT NULL DEFAULT 'classic-serif',
+    layout_slug TEXT NOT NULL DEFAULT 'editorial',
     collage_id INTEGER REFERENCES collages(id),
     status TEXT NOT NULL DEFAULT 'drafting',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -107,3 +110,53 @@ CREATE TABLE IF NOT EXISTS session_feedback (
 CREATE INDEX IF NOT EXISTS idx_session_variants_session_id ON session_variants(session_id);
 CREATE INDEX IF NOT EXISTS idx_session_feedback_session_id ON session_feedback(session_id);
 CREATE INDEX IF NOT EXISTS idx_authoring_sessions_status ON authoring_sessions(status);
+
+-- Add columns that may be missing on existing authoring_sessions tables
+DO $$ BEGIN
+    ALTER TABLE authoring_sessions ADD COLUMN palette_slug TEXT NOT NULL DEFAULT 'arctic-breeze';
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+DO $$ BEGIN
+    ALTER TABLE authoring_sessions ADD COLUMN font_slug TEXT NOT NULL DEFAULT 'classic-serif';
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+DO $$ BEGIN
+    ALTER TABLE authoring_sessions ADD COLUMN layout_slug TEXT NOT NULL DEFAULT 'editorial';
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+-- Custom design elements (PPTX import + manual)
+
+CREATE TABLE IF NOT EXISTS custom_palettes (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL DEFAULT '',
+    palette_data JSONB NOT NULL,
+    source TEXT NOT NULL DEFAULT 'pptx',
+    source_filename TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS custom_font_pairings (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL DEFAULT '',
+    font_data JSONB NOT NULL,
+    source TEXT NOT NULL DEFAULT 'manual',
+    source_filename TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS custom_layouts (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL DEFAULT '',
+    layout_data JSONB NOT NULL,
+    base_layout_slug TEXT NOT NULL DEFAULT 'editorial',
+    source TEXT NOT NULL DEFAULT 'pptx',
+    source_filename TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
