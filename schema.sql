@@ -47,6 +47,20 @@ CREATE INDEX IF NOT EXISTS idx_views_share_link_id ON views(share_link_id);
 CREATE INDEX IF NOT EXISTS idx_views_viewer_email ON views(viewer_email);
 CREATE INDEX IF NOT EXISTS idx_decks_slug ON decks(slug);
 
+-- Add columns that may be missing on existing production tables
+DO $$ BEGIN
+    ALTER TABLE share_links ADD COLUMN feedback_enabled BOOLEAN DEFAULT TRUE;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+DO $$ BEGIN
+    ALTER TABLE views ADD COLUMN current_slide INTEGER DEFAULT NULL;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+DO $$ BEGIN
+    ALTER TABLE views ADD COLUMN total_slides INTEGER DEFAULT NULL;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
 CREATE TABLE IF NOT EXISTS slide_feedback (
     id SERIAL PRIMARY KEY,
     view_id INTEGER NOT NULL,
