@@ -39,8 +39,11 @@ function startHeartbeat(viewId) {
             var doc = iframe.contentDocument;
             var active = doc.querySelector('.slide.active[data-slide]');
             if (active) {
-                var slide = parseInt(active.dataset.slide) + 1;
-                var total = doc.querySelectorAll('.slide').length || null;
+                var val = parseInt(active.dataset.slide);
+                var first = doc.querySelector('.slide[data-slide]');
+                var zeroIndexed = first && parseInt(first.dataset.slide) === 0;
+                var slide = zeroIndexed ? val + 1 : val;
+                var total = doc.querySelectorAll('.slide[data-slide]').length || doc.querySelectorAll('.slide').length || null;
                 updateSlide(slide, total);
             }
         } catch (e) { /* cross-origin or not loaded */ }

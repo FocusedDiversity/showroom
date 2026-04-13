@@ -36,15 +36,18 @@ function initFeedback(viewId) {
             var iframe = document.getElementById('deck-frame');
             if (!iframe || !iframe.contentDocument) return;
             var doc = iframe.contentDocument;
-            // Method 1: active slide with data-slide
+            // Method 1: active slide with data-slide (detect 0-based vs 1-based)
             var active = doc.querySelector('.slide.active[data-slide]');
             if (active) {
-                currentSlide = parseInt(active.dataset.slide) + 1;
+                var val = parseInt(active.dataset.slide);
+                var first = doc.querySelector('.slide[data-slide]');
+                var zeroIndexed = first && parseInt(first.dataset.slide) === 0;
+                currentSlide = zeroIndexed ? val + 1 : val;
                 if (panelOpen) updateSlideLabel();
                 return;
             }
             // Method 2: slide indicator text "N / M"
-            var el = doc.getElementById('slideNum');
+            var el = doc.getElementById('slideNum') || doc.getElementById('slideIndicator') || doc.querySelector('.slide-indicator');
             if (el) {
                 var m = el.textContent.match(/(\d+)\s*\/\s*(\d+)/);
                 if (m) {

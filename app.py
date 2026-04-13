@@ -51,14 +51,20 @@ def inject_slide_tracking(html_content):
 <script>
 (function() {
   var lastSlide = null;
+  // Detect if slides are 0-based or 1-based by checking first slide's data-slide value
+  var firstSlide = document.querySelector('.slide[data-slide]');
+  var zeroIndexed = firstSlide && parseInt(firstSlide.dataset.slide) === 0;
   function detectSlide() {
     var slide = null;
-    // Method 1: Active slide with data-slide attribute (0-based → 1-based)
+    // Method 1: Active slide with data-slide attribute
     var active = document.querySelector('.slide.active[data-slide]');
-    if (active) { slide = parseInt(active.dataset.slide) + 1; }
-    // Method 2: Parse "N / M" from slide indicator text
+    if (active) {
+      slide = parseInt(active.dataset.slide);
+      if (zeroIndexed) slide = slide + 1;
+    }
+    // Method 2: Parse "N / M" from any slide indicator
     if (!slide) {
-      var el = document.getElementById('slideNum') || document.querySelector('.slide-indicator');
+      var el = document.getElementById('slideNum') || document.getElementById('slideIndicator') || document.querySelector('.slide-indicator');
       if (el) {
         var m = el.textContent.match(/(\\d+)\\s*\\/\\s*(\\d+)/);
         if (m) { slide = parseInt(m[1]); }
@@ -66,14 +72,14 @@ def inject_slide_tracking(html_content):
     }
     if (typeof slide === 'number' && slide > 0 && slide !== lastSlide) {
       lastSlide = slide;
-      var total = document.querySelectorAll('.slide').length || null;
+      var total = document.querySelectorAll('.slide[data-slide]').length || document.querySelectorAll('.slide').length || null;
       window.parent.postMessage({type: 'showroom_slide', slide: slide, total: total}, '*');
     }
   }
   setInterval(detectSlide, 500);
   document.addEventListener('keydown', function() { setTimeout(detectSlide, 100); });
   document.addEventListener('click', function() { setTimeout(detectSlide, 100); });
-  setTimeout(detectSlide, 200);
+  setTimeout(detectSlide, 300);
 })();
 </script>'''
     # Inject before </body> using string replacement (not re.sub, which
