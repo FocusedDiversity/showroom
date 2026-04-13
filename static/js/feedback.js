@@ -183,7 +183,8 @@ function initFeedback(viewId) {
         }
 
         // Update input placeholder — check if viewer has own comments on this slide
-        var hasOwn = items.some(function (f) { return f.is_own !== false; });
+        var currentItems = feedbackCache[currentSlide] || [];
+        var hasOwn = currentItems.some(function (f) { return f.is_own !== false; });
         panelInput.placeholder = hasOwn
             ? 'Add another comment...'
             : 'Share your thoughts on this slide...';
