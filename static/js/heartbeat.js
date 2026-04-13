@@ -14,16 +14,43 @@ function startHeartbeat(viewId) {
     var slideIndicator = document.getElementById('slide-indicator');
     window.addEventListener('message', function (e) {
         if (e.data && e.data.type === 'showroom_slide') {
-            currentSlide = e.data.slide;
-            totalSlides = e.data.total || totalSlides;
-            slideHistory.push({ slide: currentSlide, time: getElapsed() });
-            // Update topbar indicator
-            if (slideIndicator) {
-                slideIndicator.textContent = 'Slide ' + currentSlide + (totalSlides ? ' of ' + totalSlides : '');
-                slideIndicator.classList.add('visible');
-            }
+            updateSlide(e.data.slide, e.data.total);
         }
     });
+
+    function updateSlide(slide, total) {
+        if (typeof slide !== 'number' || slide < 1) return;
+        if (slide === currentSlide) return;
+        currentSlide = slide;
+        totalSlides = total || totalSlides;
+        slideHistory.push({ slide: currentSlide, time: getElapsed() });
+        if (slideIndicator) {
+            slideIndicator.textContent = 'Slide ' + currentSlide + (totalSlides ? ' of ' + totalSlides : '');
+            slideIndicator.classList.add('visible');
+        }
+    }
+
+    // Fallback: poll iframe DOM directly if postMessage isn't working
+    function pollIframe() {
+        if (currentSlide) return;
+        try {
+            var iframe = document.getElementById('deck-frame');
+            if (!iframe || !iframe.contentDocument) return;
+            var doc = iframe.contentDocument;
+            var active = doc.querySelector('.slide.active[data-slide]');
+            if (active) {
+                var slide = parseInt(active.dataset.slide) + 1;
+                var total = doc.querySelectorAll('.slide').length || null;
+                updateSlide(slide, total);
+            }
+        } catch (e) { /* cross-origin or not loaded */ }
+    }
+    var iframePollCount = 0;
+    var iframePollTimer = setInterval(function () {
+        pollIframe();
+        iframePollCount++;
+        if (currentSlide || iframePollCount >= 10) clearInterval(iframePollTimer);
+    }, 1000);
 
     // Pause timer when tab is hidden
     document.addEventListener('visibilitychange', function () {

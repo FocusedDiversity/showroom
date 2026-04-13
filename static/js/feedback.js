@@ -17,7 +17,8 @@ function initFeedback(viewId) {
 
     if (!toggleBtn || !panel) return;
 
-    // --- Listen for slide changes from heartbeat ---
+    // --- Detect current slide ---
+    // Primary: listen for postMessage from iframe tracking script
     window.addEventListener('message', function (e) {
         if (e.data && e.data.type === 'showroom_slide') {
             currentSlide = e.data.slide;
@@ -27,6 +28,39 @@ function initFeedback(viewId) {
             }
         }
     });
+
+    // Fallback: poll the iframe DOM directly (same-origin)
+    function pollSlideFromIframe() {
+        if (currentSlide) return; // postMessage already working
+        try {
+            var iframe = document.getElementById('deck-frame');
+            if (!iframe || !iframe.contentDocument) return;
+            var doc = iframe.contentDocument;
+            // Method 1: active slide with data-slide
+            var active = doc.querySelector('.slide.active[data-slide]');
+            if (active) {
+                currentSlide = parseInt(active.dataset.slide) + 1;
+                if (panelOpen) updateSlideLabel();
+                return;
+            }
+            // Method 2: slide indicator text "N / M"
+            var el = doc.getElementById('slideNum');
+            if (el) {
+                var m = el.textContent.match(/(\d+)\s*\/\s*(\d+)/);
+                if (m) {
+                    currentSlide = parseInt(m[1]);
+                    if (panelOpen) updateSlideLabel();
+                }
+            }
+        } catch (e) { /* cross-origin or not loaded yet */ }
+    }
+    // Poll every second for 10 seconds as fallback
+    var pollCount = 0;
+    var pollTimer = setInterval(function () {
+        pollSlideFromIframe();
+        pollCount++;
+        if (currentSlide || pollCount >= 10) clearInterval(pollTimer);
+    }, 1000);
 
     // --- Toggle panel ---
     toggleBtn.addEventListener('click', function () {
