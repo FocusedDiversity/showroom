@@ -176,7 +176,9 @@ function initFeedback(viewId) {
 
     function submitFeedback() {
         var comment = panelInput.value.trim();
-        if (!comment || !currentSlide) return;
+        if (!comment) return;
+        // Default to slide 1 if slide detection hasn't fired yet
+        if (!currentSlide) currentSlide = 1;
 
         var slideAtSubmit = currentSlide;
         var tempId = '_temp_' + Math.random().toString(36).slice(2);
